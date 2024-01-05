@@ -96,11 +96,11 @@
 <p>比如说，证券行业的历史数据，数据内容包括时间，价格等信息，都是数字类型。对比csv文本文件来说，可以压缩到之前的1&#x2F;4.</p>
 <p>举个栗子:</p>
 <p>这是某一证券的分钟历史k线文本，占用空间45M</p>
-<p><img src="/bcolz-1.jpg" alt="1"></p>
+<p><img src="/bcolz/bcolz-1.jpg" alt="1"></p>
 <p>文件格式类型如下，都是数字 </p>
-<p><img src="/bcolz-2.jpg" alt="2"></p>
+<p><img src="/bcolz/bcolz-2.jpg" alt="2"></p>
 <p>接下来看使用carray 存储的结果 11.4M </p>
-<p><img src="/bcolz-3.jpg" alt="3"></p>
+<p><img src="/bcolz/bcolz-3.jpg" alt="3"></p>
 <p>最后献上代码</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#arr 为numply 数组</span></span><br><span class="line">carr = bcolz.carray(arr, chunklen=<span class="number">10</span> * <span class="number">1024</span>,expectedlen=<span class="number">10</span>*<span class="number">1024</span>,rootdir=<span class="string">&quot;D:/quote/000001.XSHE1&quot;</span>,cparams=bcolz.cparams(quantize=<span class="number">1</span>))</span><br><span class="line"><span class="comment">#存磁盘</span></span><br><span class="line">carr.flush() </span><br><span class="line"><span class="comment">#格式转换过程：csv-&gt;numpy-&gt;bcolz.carray</span></span><br></pre></td></tr></table></figure>
 
