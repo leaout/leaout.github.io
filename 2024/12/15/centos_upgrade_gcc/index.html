@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="robots" content="index, follow">
+  <!-- title -->
+  
+    
+  <title>centos7 升级gcc - Leaout&#39;s Blog</title>
+    
+  
+  
+  <!-- open graph -->
+  <meta name="description" content="centos 升级gcc方法1scl enable devtoolset-7 bash vim &#x2F;etc&#x2F;profile source &#x2F;opt&#x2F;rh&#x2F;devtoolset-7&#x2F;enable 方法2源码编译 GCC源码地址为http:&#x2F;&#x2F;ftp.gnu.org&#x2F;gnu&#x2F;gcc wget http:&#x2F;&#x2F;ftp.gnu.org&#x2F;gnu&#x2F;gcc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="centos7 升级gcc">
+<meta property="og:url" content="http://example.com/2024/12/15/centos_upgrade_gcc/index.html">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+<meta property="og:description" content="centos 升级gcc方法1scl enable devtoolset-7 bash vim &#x2F;etc&#x2F;profile source &#x2F;opt&#x2F;rh&#x2F;devtoolset-7&#x2F;enable 方法2源码编译 GCC源码地址为http:&#x2F;&#x2F;ftp.gnu.org&#x2F;gnu&#x2F;gcc wget http:&#x2F;&#x2F;ftp.gnu.org&#x2F;gnu&#x2F;gcc">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-15T14:26:08.000Z">
+<meta property="article:modified_time" content="2024-12-15T13:00:20.107Z">
+<meta property="article:author" content="chenliangyu">
+<meta name="twitter:card" content="summary">
+  <!-- canonical -->
+  
+  <link rel="canonical" href="http://example.com/2024/12/15/centos_upgrade_gcc/">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <!-- CSS -->
+  
+<link rel="stylesheet" href="/css/reset.css">
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<link rel="stylesheet" href="/css/markdown.css">
+
+  
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">Leaout&#39;s Blog</a>
+    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
+        <ul class="nav">
+            
+            <li><a href="/">Home</a></li>
+            
+            <li><a href="/about/">About</a></li>
+            
+            <li><a href="/archives">Archives</a></li>
+            
+        </ul>
+
+
+    </a>
+</div>
+
+                
+                <div class="post-main">
+    
+        <div class="post-main-title">
+            centos7 升级gcc
+        </div>
+        <div class="post-meta">
+            2024-12-15 ｜ 
+            
+        </div>
+        <!-- 圆角分类 -->
+        <!-- <div class="tags"> -->
+            <!--  -->
+        <!-- </div> -->
+        <div class="post-md">
+            <h1 id="centos-升级gcc"><a href="#centos-升级gcc" class="headerlink" title="centos 升级gcc"></a>centos 升级gcc</h1><h2 id="方法1"><a href="#方法1" class="headerlink" title="方法1"></a>方法1</h2><p>scl enable devtoolset-7 bash</p>
+<p>vim &#x2F;etc&#x2F;profile</p>
+<p>source &#x2F;opt&#x2F;rh&#x2F;devtoolset-7&#x2F;enable</p>
+<h2 id="方法2"><a href="#方法2" class="headerlink" title="方法2"></a>方法2</h2><p>源码编译</p>
+<p>GCC源码地址为<a target="_blank" rel="noopener" href="http://ftp.gnu.org/gnu/gcc">http://ftp.gnu.org/gnu/gcc</a></p>
+<p>wget <a target="_blank" rel="noopener" href="http://ftp.gnu.org/gnu/gcc/gcc-8.3.0/gcc-8.3.0.tar.gz">http://ftp.gnu.org/gnu/gcc/gcc-8.3.0/gcc-8.3.0.tar.gz</a> tar -zxvf gcc-8.3.0.tar.gz</p>
+<p>cd gcc-8.3.0</p>
+<p>利用源码包里自带的工具下载所需要的依赖项，确保系统可以联网</p>
+<p>.&#x2F;contrib&#x2F;download_prerequisites</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>mkdir build #创建编译输出目录</p>
+<p>cd build</p>
+<p>..&#x2F;configure –enable-checking&#x3D;release –enable-languages&#x3D;c,c++ –disable-multilib #生成Makefile</p>
+<p>make #编译</p>
+<p>make install 安装</p>
+<p>引用</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/jiangshuanshuan/article/details/103890748">https://blog.csdn.net/jiangshuanshuan/article/details/103890748</a></p>
+
+        </div>
+    
+<!-- tags -->
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2023 Leaout&#39;s Blog</span>
+    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

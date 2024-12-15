@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="robots" content="index, follow">
+  <!-- title -->
+  
+    
+  <title>M401A机顶盒刷机安装armbian - Leaout&#39;s Blog</title>
+    
+  
+  
+  <!-- open graph -->
+  <meta name="description" content="魔百盒M401A原本只是一款普通的机顶盒，但经过刷入开源操作系统armbian，它将获得全新的生命力和无限的可能性。本教程将一步步指导您完成整个刷机过程，从准备阶段到具体操作，让您轻松掌握刷机技巧，让魔百盒M401A焕发出全新的光彩。 一、硬件与树莓派对比 36.5 KB   二、 检查自己的M401A是哪种类型的版本 魔百盒怎么样刷系统 魔百盒311-1a YST 刷Armbian系统教程分享">
+<meta property="og:type" content="article">
+<meta property="og:title" content="M401A机顶盒刷机安装armbian">
+<meta property="og:url" content="http://example.com/2024/12/15/M401armbian/index.html">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+<meta property="og:description" content="魔百盒M401A原本只是一款普通的机顶盒，但经过刷入开源操作系统armbian，它将获得全新的生命力和无限的可能性。本教程将一步步指导您完成整个刷机过程，从准备阶段到具体操作，让您轻松掌握刷机技巧，让魔百盒M401A焕发出全新的光彩。 一、硬件与树莓派对比 36.5 KB   二、 检查自己的M401A是哪种类型的版本 魔百盒怎么样刷系统 魔百盒311-1a YST 刷Armbian系统教程分享">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="og:image" content="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif">
+<meta property="og:image" content="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="og:image" content="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="og:image" content="https://app.yinxiang.com/images/file-generic.png">
+<meta property="article:published_time" content="2024-12-15T14:26:08.000Z">
+<meta property="article:modified_time" content="2024-12-15T12:59:54.374Z">
+<meta property="article:author" content="chenliangyu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://app.yinxiang.com/images/file-generic.png">
+  <!-- canonical -->
+  
+  <link rel="canonical" href="http://example.com/2024/12/15/M401armbian/">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <!-- CSS -->
+  
+<link rel="stylesheet" href="/css/reset.css">
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<link rel="stylesheet" href="/css/markdown.css">
+
+  
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">Leaout&#39;s Blog</a>
+    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
+        <ul class="nav">
+            
+            <li><a href="/">Home</a></li>
+            
+            <li><a href="/about/">About</a></li>
+            
+            <li><a href="/archives">Archives</a></li>
+            
+        </ul>
+
+
+    </a>
+</div>
+
+                
+                <div class="post-main">
+    
+        <div class="post-main-title">
+            M401A机顶盒刷机安装armbian
+        </div>
+        <div class="post-meta">
+            2024-12-15 ｜ 
+            
+        </div>
+        <!-- 圆角分类 -->
+        <!-- <div class="tags"> -->
+            <!--  -->
+        <!-- </div> -->
+        <div class="post-md">
+            <p><a target="_blank" rel="noopener" href="https://www.znds.com/bbs-342-1.html">魔百盒</a>M401A原本只是一款普通的机顶盒，但经过刷入开源操作系统armbian，它将获得全新的生命力和无限的可能性。本<a target="_blank" rel="noopener" href="https://www.znds.com/jc/">教程</a>将一步步指导您完成整个<a target="_blank" rel="noopener" href="https://www.znds.com/bbs-102-1.html">刷机</a>过程，从准备阶段到具体操作，让您轻松掌握刷机技巧，让魔百盒M401A焕发出全新的光彩。</p>
+<p><strong>一、硬件与树莓派对比</strong></p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/16b06889-00ad-4b3f-89c9-c1bd3a745877"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">36.5 KB
+</a></p>
+<p><img src="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif" alt="img"></p>
+<p><strong>二、 检查自己的M401A是哪种类型的版本</strong></p>
+<p><a target="_blank" rel="noopener" href="https://www.znds.com/tv-1246318-1-1.html">魔百盒怎么样刷系统 魔百盒311-1a YST 刷Armbian系统教程分享</a> 上面的github issue主要介绍了如何分辨M401A同型号但是不同结构。主要分为两种类型三种结构：</p>
+<blockquote>
+<p>类型A</p>
+<ul>
+<li>强版本</li>
+</ul>
+<p>2GHz的EMMC参数和1.8GHz的CPU参数，dtb驱动 ddr4内存是scy;emmc标识为sec 137字样;板子的logo文字印刷在靠近蓝牙芯片处.</p>
+<ul>
+<li>弱版本</li>
+</ul>
+<p>1GHz的EMMC参数和1.7GHz的CPU参数，dtb驱动 总体同上面强体质版本，emmc标识为silicongo.</p>
+<p>类型B ddr4内存是CXMT;emmc标识为silicongo字样;板子的logo文字印刷在靠近USB接口处.</p>
+</blockquote>
+<p><img src="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif" alt="img"></p>
+<p><strong>三、刷机前准备</strong></p>
+<p>开始刷机前需要准备一些工具：</p>
+<ol>
+<li>电视盒子、U盘、键盘、显示器、HDMI线</li>
+</ol>
+<p><em>复制代码</em></p>
+<p>1、下载Armbian系统 <a target="_blank" rel="noopener" href="https://github.com/ophub/amlogic-s9xxx-armbian/releases">https://github.com/ophub/amlogic-s9xxx-armbian/releases</a></p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/b180f0ed-06ad-4a30-ae72-53136c6f175e"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">9.4 KB
+</a></p>
+<p>进入上面的开源库，找到Armbian_23.02.0_amlogic_s905l3a_jammy_6.1.18_server_2023.03.16.img.gz类似这样格式的安装包，下载安装即可。</p>
+<p>2、将Armbian系统写入U盘</p>
+<p>我这边使用的时rufus工具，下载地址：<a target="_blank" rel="noopener" href="https://www.aliyundrive.com/s/h3Gpfcyjwko">rufus-3.21</a><a target="_blank" rel="noopener" href="https://www.aliyundrive.com/s/h3Gpfcyjwko">_</a><a target="_blank" rel="noopener" href="https://www.aliyundrive.com/s/h3Gpfcyjwko">BETA.exe</a> 提取码: kc09</p>
+<p>首先选择使用的U盘设备 选择刚刚下载的Armbian系统 点击开始，U盘会要求格式化，确定后会自动写入U盘</p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/bfe27add-8716-4697-817f-0a3e90781465"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">23.1 KB
+</a></p>
+<p>3、写入U盘后参数更改</p>
+<p>成功写入U盘后打开U盘内的uEnv.txt，修改使用的dtb文件</p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/b4235b0d-118e-4ce5-a835-bb26eb137dab"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">12.9 KB
+</a></p>
+<ol>
+<li><p>FDT&#x3D;&#x2F;dtb&#x2F;amlogic&#x2F;meson-g12a-s905l3a-e900v22c.dtb</p>
+<p>修改为</p>
+<p>FDT&#x3D;&#x2F;dtb&#x2F;amlogic&#x2F;meson-g12a-s905l3a-m401a.dtb</p>
+</li>
+</ol>
+<p><em>复制代码</em></p>
+<p><img src="https://app.yinxiang.com/shard/s68/res/1153e80b-8af7-4ee4-8183-9aede23319ae.gif" alt="img"></p>
+<p><strong>四、开始刷机</strong></p>
+<p>1、盒子从U盘进行启动 拆开盒子，找到主板后面的重置按钮 插上U盘，先按住重置按钮，插上电源，过5秒左右松开按钮，等待看是否已经进入刷armbian系统的流程</p>
+<p>2、设置账户 进入armbian系统后会加载一会程序，然后提示需要设置root密码，还有设置时区</p>
+<p>3、Armbian写入EMMC 输入命令armbian-install</p>
+<p>提示选择安装设备型号</p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/89eff3ed-0b89-4225-9e7f-23bab2cd2882"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">36.9 KB
+</a></p>
+<p>这边选择306 M401A</p>
+<p>FDTFILE 选择meson-g12a-s905l3a-m401a.dtb 选择文件系统</p>
+<p><a target="_blank" rel="noopener" href="https://app.yinxiang.com/shard/s68/res/235586c4-d50b-48ea-96b2-453a38cec500"><img src="https://app.yinxiang.com/images/file-generic.png" alt="img">13.0 KB
+</a></p>
+<p>这边选择**1 **ext4 接下来系统会自动进行初始化工作。。。</p>
+<p>4、重启系统</p>
+<p>系统提示Successful installed, please unplug the USB，re-insert the power supply to start the armbian.。表示已经安装完成，但是现在不要拔U盘，输入reboot 进行系统重启。</p>
+<p>重启完成后可以断电拔出U盘，然后通电启动进入系统。</p>
+
+        </div>
+    
+<!-- tags -->
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2023 Leaout&#39;s Blog</span>
+    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
