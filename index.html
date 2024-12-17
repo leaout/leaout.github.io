@@ -63,6 +63,39 @@
                 <div class="post-list">
     
     <div class="post">
+        <a class="post-title" href="/2024/12/17/pg_deadlock_detect/">pg数据库死锁检测</a>
+        <div class="post-except">
+            概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没
+            <a class="read-more" href="/2024/12/17/pg_deadlock_detect/"> ... </a>
+        </div>
+        <div class="post-date">2024.12.17</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2024/12/17/pg_vector/">pgvector 操作手册</a>
+        <div class="post-except">
+            pg_vector 函数说明Supported distance functions are:
+
+&lt;-&gt; - L2 distance
+&lt;#&gt; - (negative) inner product
+&lt;&#x3D;&gt; - cos
+            <a class="read-more" href="/2024/12/17/pg_vector/"> ... </a>
+        </div>
+        <div class="post-date">2024.12.17</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2024/12/17/timeseries_bench/">timescaledb vs influxdb 性能测试</a>
+        <div class="post-except">
+            influxdb 性能测试参考https://github.com/GreptimeTeam/tsbs/blob/master/docs/greptimedb-vs-influxdb-manual-zh.md
+测试机器配置 客户端 192.168.1.111
+
+            <a class="read-more" href="/2024/12/17/timeseries_bench/"> ... </a>
+        </div>
+        <div class="post-date">2024.12.17</div>
+    </div>
+    
+    <div class="post">
         <a class="post-title" href="/2024/12/15/M401armbian/">M401A机顶盒刷机安装armbian</a>
         <div class="post-except">
             魔百盒M401A原本只是一款普通的机顶盒，但经过刷入开源操作系统armbian，它将获得全新的生命力和无限的可能性。本教程将一步步指导您完成整个刷机过程，从准备阶段到具体操作，让您轻松掌握刷机技巧，让魔百盒M401A焕发出全新的光彩。
@@ -98,7 +131,7 @@ Hexo 初始化和本地预览初始化并安装所需组件：
     </div>
     
     <div class="post">
-        <a class="post-title" href="/2024/01/07/archcheck/">C++代码中判断CPU 架构</a>
+        <a class="post-title" href="/2024/01/07/archcheck/">如何判断CPU 架构</a>
         <div class="post-except">
             C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型c++代码中判断123456789101112131415161718192021222324252627#include&lt;iostream&gt;int main(
             <a class="read-more" href="/2024/01/07/archcheck/"> ... </a>

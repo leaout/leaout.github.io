@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="robots" content="index, follow">
+  <!-- title -->
+  
+    
+  <title>pg数据库死锁检测 - Leaout&#39;s Blog</title>
+    
+  
+  
+  <!-- open graph -->
+  <meta name="description" content="概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没有严格的限制，在申请锁时也没有严格的查验，因此不可避免的就会产生死锁。pg数据库采用一种全局死锁检测的方法就是，每个进程启动后会启动一个定时">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pg数据库死锁检测">
+<meta property="og:url" content="http://example.com/2024/12/17/pg_deadlock_detect/index.html">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+<meta property="og:description" content="概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没有严格的限制，在申请锁时也没有严格的查验，因此不可避免的就会产生死锁。pg数据库采用一种全局死锁检测的方法就是，每个进程启动后会启动一个定时">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/73cd1dcb30c84198adb1055d2eee7588.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/0e90a10038d94393b5b94a7b1bf460cb.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/1ca408dca106471fb6968623358dd2a8.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/b9c5333176aa41228754a473e8a1f086.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/c594a1f5ee2647e88bd33e6866c68d35.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/873e511094ba46e2bcbc981c4cfa4527.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/7dae8c28e2e0431589ebdbbdf68a0dd0.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/7dbe058119c24858b32d298ef1e87396.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/a7143deea17a44699312ed3bb1b68e1e.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/70fb536e09e24f239db11f9cc0c7bdeb.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/3734fae3e86b4a469014482f81ef0bd5.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/e5d4725158454a32962ac9b22eb6fcf6.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/96caa728d87648dc851658c8f9babc65.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/bdf27d7e013f44ac95405ab8518cd90a.png#pic_center">
+<meta property="og:image" content="https://i-blog.csdnimg.cn/direct/99001e18554f4893baae67bae9728303.png#pic_center">
+<meta property="article:published_time" content="2024-12-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-12-17T02:46:43.571Z">
+<meta property="article:author" content="chenliangyu">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i-blog.csdnimg.cn/direct/73cd1dcb30c84198adb1055d2eee7588.png#pic_center">
+  <!-- canonical -->
+  
+  <link rel="canonical" href="http://example.com/2024/12/17/pg_deadlock_detect/">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <!-- CSS -->
+  
+<link rel="stylesheet" href="/css/reset.css">
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<link rel="stylesheet" href="/css/markdown.css">
+
+  
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">Leaout&#39;s Blog</a>
+    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
+        <ul class="nav">
+            
+            <li><a href="/">Home</a></li>
+            
+            <li><a href="/about/">About</a></li>
+            
+            <li><a href="/archives">Archives</a></li>
+            
+        </ul>
+
+
+    </a>
+</div>
+
+                
+                <div class="post-main">
+    
+        <div class="post-main-title">
+            pg数据库死锁检测
+        </div>
+        <div class="post-meta">
+            2024-12-17 ｜ 
+            
+        </div>
+        <!-- 圆角分类 -->
+        <!-- <div class="tags"> -->
+            <!--  -->
+        <!-- </div> -->
+        <div class="post-md">
+            <h2 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h2><p>每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。<br>数据库中的常规锁，对申请锁的顺序没有严格的限制，在申请锁时也没有严格的查验，因此不可避免的就会产生死锁。pg数据库采用一种全局死锁检测的方法就是，每个进程启动后会启动一个定时器，定时调用死锁检测函数，检测是否有死锁产生，如果有死锁则进行相应的处理来解除死锁。</p>
+<h3 id="实边"><a href="#实边" class="headerlink" title="实边"></a>实边</h3><p>在常规锁的申请过程中，假设A事务持有表的共享锁或排它锁，当时事务B申请表的排他锁时，就需要进入等待状态，即有等待状态B-&gt;A,我们称这种等待边为实边。它主要出现在等待者和持锁者之间。<br><img src="https://i-blog.csdnimg.cn/direct/73cd1dcb30c84198adb1055d2eee7588.png#pic_center" alt="在这里插入图片描述"></p>
+<h3 id="虚边"><a href="#虚边" class="headerlink" title="虚边"></a>虚边</h3><p>假设事务A持有共享锁，事务B要申请排他锁，因为与事务A冲突，那么事务B就需要进入等待队列，如果此时又有事务C要申请共享锁，虽然事务C与事务A并不冲突，但是事务C与等待队列中的事务B要持有的排他锁冲突，所以事务C也要进入等待队列中，此时的冲突关系C-&gt;B ,我们称他们之间等待的边为虚边。它主要出现在等待队列的等待者之间的关系。<br><img src="https://i-blog.csdnimg.cn/direct/0e90a10038d94393b5b94a7b1bf460cb.png#pic_center" alt="在这里插入图片描述"></p>
+<h3 id="环"><a href="#环" class="headerlink" title="环"></a>环</h3><p>在数据库中，假设事务A需要等待事务B释放锁后才能执行，这样的等待关系我们称之为边，边是有向的。实边和虚边是边的两种特殊情况。假设一个锁的等待队列中的所有的事务，他们之间的等待关系都用边来表示，这样构成关系图实际上就是一种有向图。如果有向图中出现了环，我们就可以判断出现了死锁。如果环的每个边都是实边，那么就是出现了实边死锁，实边死锁只能通过杀掉其中一个进程来断开环从而解锁。 如果环中存在虚边，那么出现的就是虚边死锁，就可以通过调整等待队列的顺序来尝试断开环，从而解锁。<br><img src="https://i-blog.csdnimg.cn/direct/1ca408dca106471fb6968623358dd2a8.png#pic_center" alt="在这里插入图片描述"></p>
+<ul>
+<li>假设有A、B、C三个事务，有Lock1、Lock2两把锁，其中事务A等待Lock1的排它锁；事务B持有Lock1的共享锁，等待Lock2的共享锁；事务C持有Lock 2的排它锁，等待Lock1的共享锁。</li>
+<li>对于Lock1来说，事务B持有其共享锁，事务A等待Lock1的排它锁，与事务B形成实边，事务C等待Lock1的共享锁，与事务B并不冲突，但是与事务A冲突，所以与事务A形成虚边。</li>
+<li>对于Lock2来说，事务C持有Lock2的排它锁，事务B在等待Lock2的共享锁，与事务C冲突，形成实边。</li>
+<li>最终得到的等待关系图，如上图，形成了一个包含虚边的环，即虚边死锁；即事务A在等待事务B释放Lock1，事务B在等待事务C释放Lock2，而事务C在等待事务A释放Lock1，从而形成了死锁</li>
+<li>要解除上面的虚边死锁，可以对虚边进行拓扑排序，调整虚边的等待关系，即将Lock1等待队列上的C–&gt;A,改成A–&gt;C,这样得到的等待关系图，就不存在环了，死锁就不存在了。事务A在等待事务C释放Lock1，事务B在等待事务C释放Lock2，事务C可以直接获取Lock1的共享锁，执行完之后就可以释放Lock2的排他锁，释放后，事务A获取Lock1锁，事务B获取Lock2锁，都不再阻塞。<br><img src="https://i-blog.csdnimg.cn/direct/b9c5333176aa41228754a473e8a1f086.png#pic_center" alt="在这里插入图片描述"></li>
+</ul>
+<h3 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h3><p>当存在虚边构成的环时，会通过重排等待队列的方式尝试断开环从而解锁。重排的方式就是通过拓扑排序实现。<br>拓扑排序就是在一个有向无环图（DAG），将所有的点 排成一个线性的序列，使得每条有向边的起点都排在终点的前面。<br>拓扑排序遵循的原理：<br>1） 在图中选择一个没有前驱的定点V<br>2） 从图中删除顶点V和所有以该顶点为尾的弧。<br>如下图：<br><img src="https://i-blog.csdnimg.cn/direct/c594a1f5ee2647e88bd33e6866c68d35.png#pic_center" alt="在这里插入图片描述"></p>
+<ol>
+<li>找到没有前驱的定点V1</li>
+<li>删除V1及以V1作为起点的边</li>
+<li>继续查找没有前驱的顶点，此时V2和V3都符合要求，随机选择一个，这里选择V2</li>
+<li>删除V2和以V2作为起点的边</li>
+<li>继续查找没有前驱的顶点，V3符合，选择V3</li>
+<li>删除V3以及以V3作为起点的边</li>
+<li>剩余V4，排序结束。<br>最终得到的拓扑排序结果就有两种：<br>V1-&gt;V2-&gt;V3-&gt;V4<br>V1-&gt;V3-&gt;V2-&gt;V4<br>死锁检测函数中调用TopoSort函数实现对包含虚边的环的拓扑排序。</li>
+</ol>
+<h2 id="死锁检测相关的结构体和全局变量"><a href="#死锁检测相关的结构体和全局变量" class="headerlink" title="死锁检测相关的结构体和全局变量"></a>死锁检测相关的结构体和全局变量</h2><h3 id="结构体"><a href="#结构体" class="headerlink" title="结构体"></a>结构体</h3><h4 id="EDGE"><a href="#EDGE" class="headerlink" title="EDGE"></a>EDGE</h4><p>等待关系图中的一条边。<br>等待者（waiter）和阻塞者（blocker）可能是锁组的成员，也可能不是，但如果它们中任何一个属于锁组，那它将是锁组的领导者而非锁组中的其他成员。即便这些特定进程根本无需等待，锁组的领导者也充当整个组的代表。等待者的锁组中至少有一个成员在给定锁的等待队列上，甚至可能更多。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	PGPROC	   *waiter;			<span class="comment">/* 等待者*/</span></span><br><span class="line">	PGPROC	   *blocker;		<span class="comment">/* 被等待者or */</span></span><br><span class="line">	LOCK	   *lock;			<span class="comment">/* 等待的锁*/</span></span><br><span class="line">	<span class="type">int</span>			pred;			<span class="comment">/* 拓扑排序使用的额外变量 */</span></span><br><span class="line">	<span class="type">int</span>			link;			<span class="comment">/* 拓扑排序使用的额外变量*/</span></span><br><span class="line">&#125; EDGE;</span><br></pre></td></tr></table></figure>
+
+<h4 id="WAIT-ORDER"><a href="#WAIT-ORDER" class="headerlink" title="WAIT_ORDER"></a>WAIT_ORDER</h4><p>等待队列，如果死锁检测处有虚边死锁，则会尝试通过调整等待队列来尝试消除死锁，调整时新的等待队列就保存到waitOrders数组中，数组中每个元素就是一个等待队列，由WAIT_ORDER结构体保存其相关信息。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	LOCK	   *lock;			<span class="comment">/* 等待的锁 */</span></span><br><span class="line">	PGPROC	  **procs;			<span class="comment">/* 在lock上的新的等待队列 */</span></span><br><span class="line">	<span class="type">int</span>			nProcs;         <span class="comment">/* 等待队列的长度 */</span></span><br><span class="line">&#125; WAIT_ORDER;</span><br></pre></td></tr></table></figure>
+
+<h4 id="DEADLOCK-INFO"><a href="#DEADLOCK-INFO" class="headerlink" title="DEADLOCK_INFO"></a>DEADLOCK_INFO</h4><p>死锁相关的信息</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	LOCKTAG		locktag;		<span class="comment">/* 死锁的锁tag信息*/</span></span><br><span class="line">	LOCKMODE	lockmode;		<span class="comment">/* 等待的锁的模式*/</span></span><br><span class="line">	<span class="type">int</span>			pid;			<span class="comment">/* 阻塞的进程号*/</span></span><br><span class="line">&#125; DEADLOCK_INFO;</span><br></pre></td></tr></table></figure>
+
+<h3 id="全局变量"><a href="#全局变量" class="headerlink" title="全局变量"></a>全局变量</h3><ul>
+<li>got_deadlock_timeout： 全局死锁检测标志位，为true时触发死锁死锁检测。</li>
+<li>nCurConstraints: 当前检测到的边的数量</li>
+<li>curConstraints： 当前已被检测的虚边的信息，数组中保存，拓扑排序时就对这个数组进行排序。</li>
+<li>maxCurConstraints： 允许的最大的边数量</li>
+<li>nPossibleConstraints： 可能的边的数量</li>
+<li>possibleConstraints： 可以被调整的虚边的信息，数组中保存</li>
+<li>nWaitOrders： 新的等待队列的数量</li>
+<li>waitOrders： 新的等待队列的信息，在查找环的过程中，会将对应的等待边放到该队列中，方便进行重新排列。大小是进程数的1&#x2F;2，因为一个边就有2个等待进程。</li>
+<li>blocking_autovacuum_proc： 被vacuum阻塞的进程</li>
+<li>nVisitedProcs： 访问到的进程的数量</li>
+<li>visitedProcs： 访问到的进程信息，数组中保存，通过该数组判断是否存在环，比如如果一个进程在数组中重复出现则就构成了环。</li>
+<li>nDeadlockDetails： 死锁详细信息的数量</li>
+<li>deadlockDetails： 死锁详细信息，数组中保存</li>
+<li>beforeConstraints：记录每个进程需要在多少其他进程之前</li>
+<li>afterConstraints：则间接通过链表头记录每个进程需要在哪些进程之后。</li>
+</ul>
+<h2 id="死锁检查流程及相关函数"><a href="#死锁检查流程及相关函数" class="headerlink" title="死锁检查流程及相关函数"></a>死锁检查流程及相关函数</h2><p><img src="https://i-blog.csdnimg.cn/direct/873e511094ba46e2bcbc981c4cfa4527.png#pic_center" alt="在这里插入图片描述"></p>
+<h3 id="注册死锁检测定时器"><a href="#注册死锁检测定时器" class="headerlink" title="注册死锁检测定时器"></a>注册死锁检测定时器</h3><p>在每个进程启动时，会注册一个死锁检测定时器,回调函数为CheckDeadLockAlert，当DEADLOCK_TIMEOUT时间超时（默认是1秒）时，就会调用CheckDeadLockAlert函数，该函数内会将全局变量got_deadlock_timeout设为true.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!bootstrap)</span><br><span class="line">&#123;</span><br><span class="line">	RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLockAlert);</span><br><span class="line">	RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);</span><br><span class="line">	RegisterTimeout(LOCK_TIMEOUT, LockTimeoutHandler);</span><br><span class="line">	RegisterTimeout(IDLE_IN_TRANSACTION_SESSION_TIMEOUT,</span><br><span class="line">					IdleInTransactionSessionTimeoutHandler);</span><br><span class="line">	RegisterTimeout(IDLE_SESSION_TIMEOUT, IdleSessionTimeoutHandler);</span><br><span class="line">	RegisterTimeout(CLIENT_CONNECTION_CHECK_TIMEOUT, ClientCheckTimeoutHandler);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>进程在等待锁时会调用WaitOnLock函数等待，该函数又回调用procsleep函数，它里面就会根据该变量判断是否需要进行死锁检测。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (got_deadlock_timeout)</span><br><span class="line">&#123;</span><br><span class="line">	CheckDeadLock();</span><br><span class="line">	got_deadlock_timeout = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="InitDeadLockChecking"><a href="#InitDeadLockChecking" class="headerlink" title="InitDeadLockChecking"></a>InitDeadLockChecking</h3><p>每个backend进程启动后调用，初始化死锁检测相关的全局变量, maxBackend为进程的最大数量（max_connections),其中死锁检测相关的全局变量初始化的大小为：<br>MaxBackends &#x3D; MaxConnections + autovacuum_max_workers + 1 +<br>max_worker_processes + max_wal_senders &#x3D; 100 + 3 + 1 + 8 + 10 &#x3D; 122（默认值）</p>
+<table>
+<thead>
+<tr>
+<th>全部变量名</th>
+<th>长度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>visitedProcs</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>deadlockDetails</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>topoProcs</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>beforeConstraints</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>afterConstraints</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>waitOrders</td>
+<td>MaxBackends &#x2F; 2</td>
+</tr>
+<tr>
+<td>waitOrderProcs</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>maxCurConstraints</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>curConstraints</td>
+<td>MaxBackends</td>
+</tr>
+<tr>
+<td>maxPossibleConstraints</td>
+<td>MaxBackends * 4</td>
+</tr>
+<tr>
+<td>possibleConstraints</td>
+<td>MaxBackends * 4</td>
+</tr>
+</tbody></table>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">visitedProcs = (PGPROC **) palloc(MaxBackends * <span class="keyword">sizeof</span>(PGPROC *));<span class="comment">//访问过的进程数组，最大为maxbankend</span></span><br><span class="line">deadlockDetails = (DEADLOCK_INFO *) palloc(MaxBackends * <span class="keyword">sizeof</span>(DEADLOCK_INFO));<span class="comment">//死锁详细信息，最大为maxBackends</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> 拓扑排序用</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">topoProcs = visitedProcs;	<span class="comment">/* re-use this space */</span></span><br><span class="line">beforeConstraints = (<span class="type">int</span> *) palloc(MaxBackends * <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">afterConstraints = (<span class="type">int</span> *) palloc(MaxBackends * <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">waitOrders = (WAIT_ORDER *)</span><br><span class="line">	palloc((MaxBackends / <span class="number">2</span>) * <span class="keyword">sizeof</span>(WAIT_ORDER));<span class="comment">//等待队列数组，长度为MaxBackends/2</span></span><br><span class="line">waitOrderProcs = (PGPROC **) palloc(MaxBackends * <span class="keyword">sizeof</span>(PGPROC *));<span class="comment">//等待队列进程，最大为Maxbackends</span></span><br><span class="line">maxCurConstraints = MaxBackends;</span><br><span class="line">curConstraints = (EDGE *) palloc(maxCurConstraints * <span class="keyword">sizeof</span>(EDGE));<span class="comment">//探索的边的信息，最大为MaxBackends，设置过大会导致嵌套深度过大导致堆栈溢出</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * 允许最多保存3*MaxBackends个约束而无需重新运行TestConfiguration。</span></span><br><span class="line"><span class="comment"> （这可能已经绰绰有余，但即使空间不足，我们也可以通过每次需要时重新运行TestConfiguration来重新计算约束列表以应对。）</span></span><br><span class="line"><span class="comment"> possibleConstraints[]中的最后MaxBackends个条目被预留作为FindLockCycle的输出工作区。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">maxPossibleConstraints = MaxBackends * <span class="number">4</span>;</span><br><span class="line">possibleConstraints =</span><br><span class="line">	(EDGE *) palloc(maxPossibleConstraints * <span class="keyword">sizeof</span>(EDGE));</span><br></pre></td></tr></table></figure>
+
+<h3 id="CheckDeadLock"><a href="#CheckDeadLock" class="headerlink" title="CheckDeadLock"></a>CheckDeadLock</h3><p>这是死锁检测的入口函数，死锁检测操作就是由该函数实现。由于死锁检测是互斥的，所以死锁检测期间锁表不允许被修改。但是如果一个事务只是通过本地锁表或通过FastPath就能获得锁，则它不受死锁检测的影响。</p>
+<ul>
+<li>以排他模式锁住主锁表</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; NUM_LOCK_PARTITIONS; i++)</span><br><span class="line">	LWLockAcquire(LockHashPartitionLockByIndex(i), LW_EXCLUSIVE);<span class="comment">//以排他模式锁住主锁表</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>调用DeadLockCheck函数检测死锁</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">deadlock_state = DeadLockCheck(MyProc);<span class="comment">//检测死锁</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果产生了实边死锁，将当前进程从等待队列中删除</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (deadlock_state == DS_HARD_DEADLOCK)<span class="comment">//产生实边死锁</span></span><br><span class="line">	&#123;</span><br><span class="line">			RemoveFromWaitQueue(MyProc, LockTagHashCode(&amp;(MyProc-&gt;waitLock-&gt;tag)));<span class="comment">//将当前进程从等待队列中删除</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>释放主锁表</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = NUM_LOCK_PARTITIONS; --i &gt;= <span class="number">0</span>;)</span><br><span class="line">	LWLockRelease(LockHashPartitionLockByIndex(i));<span class="comment">//释放所有的锁</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="DeadLockCheck"><a href="#DeadLockCheck" class="headerlink" title="DeadLockCheck"></a>DeadLockCheck</h3><p>检查给定的进程上是否产生了死锁，如果是虚边死锁，会通过调整等待队列顺序来尝试解决死锁，如果无法解决，就会返回DS_HARD_DEADLOCK，死锁的详细信息会保存到deadlockDetails[]中。</p>
+<ul>
+<li>死锁检测的起点，先初始化全局变量 &#x2F;&#x2F;死锁检测开始位置，初始化边相关的全局变量如：nCurConstraints，nPossibleConstraints ,nWaitOrders,blocking_autovacuum_proc</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//死锁检测开始位置，初始化边相关的全局变量</span></span><br><span class="line">nCurConstraints = <span class="number">0</span>;</span><br><span class="line">nPossibleConstraints = <span class="number">0</span>;</span><br><span class="line">nWaitOrders = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* Initialize to not blocked by an autovacuum worker */</span></span><br><span class="line">blocking_autovacuum_proc = <span class="literal">NULL</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>调用DeadLockCheckRecurse函数查找环，如果找到实边死锁，直接诶返回死锁</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//查找死锁（环）</span></span><br><span class="line"><span class="keyword">if</span> (DeadLockCheckRecurse(proc))</span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span>			nSoftEdges;</span><br><span class="line"></span><br><span class="line">	TRACE_POSTGRESQL_DEADLOCK_FOUND();</span><br><span class="line"></span><br><span class="line">	nWaitOrders = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">if</span> (!FindLockCycle(proc, possibleConstraints, &amp;nSoftEdges))<span class="comment">//再次检查一下死锁是否消失，若消失表名有错</span></span><br><span class="line">		elog(FATAL, <span class="string">&quot;deadlock seems to have disappeared&quot;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> DS_HARD_DEADLOCK;	<span class="comment">/* 发现实边死锁*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>遍历每个等待队列，将对应锁的等待进程重新添加到锁的等待队列中，并尝试唤醒一些可唤醒的进程</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nWaitOrders; i++)<span class="comment">//遍历每个等待队列</span></span><br><span class="line">&#123;</span><br><span class="line">	LOCK	   *lock = waitOrders[i].lock;</span><br><span class="line">	PGPROC	  **procs = waitOrders[i].procs;</span><br><span class="line">	<span class="type">int</span>			nProcs = waitOrders[i].nProcs;</span><br><span class="line">	PROC_QUEUE *waitQueue = &amp;(lock-&gt;waitProcs);</span><br><span class="line">	ProcQueueInit(waitQueue);<span class="comment">//初始化等待队列</span></span><br><span class="line">	<span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; nProcs; j++)</span><br><span class="line">	&#123;</span><br><span class="line">		SHMQueueInsertBefore(&amp;(waitQueue-&gt;links), &amp;(procs[j]-&gt;links));<span class="comment">//头插法插入到队列中</span></span><br><span class="line">		waitQueue-&gt;size++;</span><br><span class="line">	&#125;</span><br><span class="line">	ProcLockWakeup(GetLocksMethodTable(lock), lock);<span class="comment">//查看是否可以唤醒一些进程</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果nWaitOrders不等于0，表明还有虚边死锁，返回DS_SOFT_DEADLOCK</li>
+<li>如果是被vacuum进程阻塞住，返回DS_BLOCKED_BY_AUTOVACUUM</li>
+<li>其他情况表明无死锁，返回DS_NO_DEADLOCK</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (nWaitOrders &gt; <span class="number">0</span>)<span class="comment">//有虚边死锁</span></span><br><span class="line">	<span class="keyword">return</span> DS_SOFT_DEADLOCK;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (blocking_autovacuum_proc != <span class="literal">NULL</span>)<span class="comment">//被vacuum阻塞</span></span><br><span class="line">	<span class="keyword">return</span> DS_BLOCKED_BY_AUTOVACUUM;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">	<span class="keyword">return</span> DS_NO_DEADLOCK;<span class="comment">//无死锁</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="DeadLockCheckRecurse"><a href="#DeadLockCheckRecurse" class="headerlink" title="DeadLockCheckRecurse"></a>DeadLockCheckRecurse</h3><p><code>DeadLockCheckRecurse</code>函数是一个递归过程，旨在深入探索并找出有效的执行顺序以避免死锁情况。该函数的主要目的是通过递归的方式检测系统中的死锁状况，并尝试找出一个无死锁的执行顺序。它在多进程或多线程环境中特别有用，尤其是在涉及到资源共享和锁机制的情况下。</p>
+<ul>
+<li><p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>curConstraints[]</code>：这是一个数组，用于保存当前递归层级正在探索的边。随着递归的深入，每发现一个新的循环（即潜在的死锁条件），就会将相应的边添加到这个数组中。</li>
+<li><code>waitOrders[]</code>：这个数组用于记录需要调整的锁等待队列，以达到一个无死锁的状态。如果存在需要调整的队列，则通过这个数组指示出来。</li>
+</ul>
+</li>
+<li><p><strong>返回值</strong>：</p>
+<ul>
+<li>如果函数返回<code>true</code>，这意味着经过当前递归层次的探索，发现无法找到任何解决方案来避免死锁，即系统处于或即将进入死锁状态。</li>
+<li>如果返回<code>false</code>，则意味着已经找到了一种无死锁的执行顺序或调整策略，使得所有进程或线程可以在不发生死锁的情况下继续执行。此时，<code>waitOrders[]</code>中会包含如何重新排列锁等待队列的具体指导，以实现这一目标。</li>
+</ul>
+</li>
+<li><p><strong>工作原理</strong>：</p>
+<ul>
+<li>该函数通过递归地检查当前的资源分配和锁等待关系，识别出所有可能形成环（即死锁的前提条件）的情况。</li>
+<li>对于每一个识别到的环，函数尝试添加或调整虚边（即改变某些进程的等待顺序或优先级），以打破潜在的死锁链。</li>
+<li>这个过程持续进行，直到所有可能的死锁情况都被探索完毕，或者找到了一个有效的无死锁执行方案。<br>执行流程如下</li>
+</ul>
+</li>
+<li><p>调用TestConfiguration检测当前的边的有效性，会将探测到的虚边保存到curConstraints数组，并返回探测到的虚边数量。</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nEdges = TestConfiguration(proc);<span class="comment">//测试边的有效性，返回探测到的虚边数量</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果返回的虚边数量小于0，表明有实边死锁</li>
+<li>如果返回的虚边数量等于0，表明无死锁</li>
+<li>如果当前探测到的nCurConstraints大于maxCurConstraints，表明超出存储限制了</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (nEdges &lt; <span class="number">0</span>)<span class="comment">//有实边死锁</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;			<span class="comment">/* hard deadlock --- no solution */</span></span><br><span class="line"><span class="keyword">if</span> (nEdges == <span class="number">0</span>)<span class="comment">//无死锁</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">false</span>;			<span class="comment">/* good configuration found */</span></span><br><span class="line"><span class="keyword">if</span> (nCurConstraints &gt;= maxCurConstraints)<span class="comment">//边数量超出限制</span></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;			<span class="comment">/* out of room for active constraints? */</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>判断PossibleConstraints中是否有空间，若无空间的话，就没必要保存探测到的虚边了</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (nPossibleConstraints + nEdges + MaxBackends &lt;= maxPossibleConstraints)<span class="comment">//有 空间保存可能的边</span></span><br><span class="line">&#123;</span><br><span class="line">	nPossibleConstraints += nEdges;<span class="comment">//其实边已经存在possibleConstraints地址后了，只不过nPossibleConstraints没更新就会忽略而已</span></span><br><span class="line">	savedList = <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span><span class="comment">//无空间保存</span></span><br><span class="line">&#123;</span><br><span class="line">	savedList = <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>将探测到的虚边保存到curConstraints，然后递归调用该函数，判断是否有死锁</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curConstraints[nCurConstraints] = possibleConstraints[oldPossibleConstraints + i];<span class="comment">//将探测到的边保存到curConstraints</span></span><br><span class="line">		nCurConstraints++;</span><br><span class="line"><span class="keyword">if</span> (!DeadLockCheckRecurse(proc))<span class="comment">//重新检测是否有死锁</span></span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span>;		<span class="comment">/* found a valid solution! */</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="TestConfiguration"><a href="#TestConfiguration" class="headerlink" title="TestConfiguration"></a>TestConfiguration</h3><p>测试当前配置的有效性。该函数首先会调用ExpandConstraints函数尝试对等待队列进行重排来尝试解除虚边死锁；然后继续查找是否存在环，如果存在就将虚边保存到possibleConstraints数组中。</p>
+<ul>
+<li>定义查保存虚边的地址,即possibleConstraints数组</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EDGE	   *softEdges = possibleConstraints + nPossibleConstraints;<span class="comment">//探测到的虚边都在此地址存放</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>判断possibleConstraints数组是否还有空间</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (nPossibleConstraints + MaxBackends &gt; maxPossibleConstraints)</span><br><span class="line">	<span class="keyword">return</span> <span class="number">-1</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>尝试调整等待队列</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!ExpandConstraints(curConstraints, nCurConstraints))<span class="comment">//尝试调整等待队列来解除虚边死锁</span></span><br><span class="line">	<span class="keyword">return</span> <span class="number">-1</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>遍历每个探测到的边，尝试根据每个边的waiter和blocker进程查找环，并将找到的环中的虚边保存到softEdges中</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nCurConstraints; i++)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (FindLockCycle(curConstraints[i].waiter, softEdges, &amp;nSoftEdges))<span class="comment">//查询等待者进程是否存在环</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (nSoftEdges == <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> <span class="number">-1</span>;		<span class="comment">/* hard deadlock detected */</span></span><br><span class="line">		softFound = nSoftEdges;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (FindLockCycle(curConstraints[i].blocker, softEdges, &amp;nSoftEdges))<span class="comment">//查询被等待者进程是否存在环</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (nSoftEdges == <span class="number">0</span>)</span><br><span class="line">			<span class="keyword">return</span> <span class="number">-1</span>;		<span class="comment">/* hard deadlock detected */</span></span><br><span class="line">		softFound = nSoftEdges;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>检测当前进程是否存在环。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (FindLockCycle(startProc, softEdges, &amp;nSoftEdges))<span class="comment">//检测当前进程是否存在环  </span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (nSoftEdges == <span class="number">0</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>;	</span><br><span class="line">	softFound = nSoftEdges;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FindLockCycleRecurse"><a href="#FindLockCycleRecurse" class="headerlink" title="FindLockCycleRecurse"></a>FindLockCycleRecurse</h3><p>递归查找是否存在环，查找的原理就是：在查找环时，先检查待测进程是否在visitedProcs数组中出现过，如果没出现过，就将待测进程存入到visitedProcs数组中，如果出现过，而且是在等待队列的起始处，则表明出现了死锁的环，返回死锁信息。<br>例如：</p>
+<ol>
+<li><p>待测进程在visitedProcs数组中未出现过，没有环，无死锁<br><img src="https://i-blog.csdnimg.cn/direct/7dae8c28e2e0431589ebdbbdf68a0dd0.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>待测进程在visitedProcs数组中出现过，存在环，但是不在起始处，对当前进程而言不算死锁<br><img src="https://i-blog.csdnimg.cn/direct/7dbe058119c24858b32d298ef1e87396.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>待测进程在visitedProcs数组中出现过，存在环，且在起始处，存在死锁<br><img src="https://i-blog.csdnimg.cn/direct/a7143deea17a44699312ed3bb1b68e1e.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+</ol>
+<ul>
+<li>判断是否出现环</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> 判断是否有环，遍历visitedProcs数组，</span></span><br><span class="line"><span class="comment"> 如果检查的proc在数组中出现过，且是当前的进程，表明出现了环</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nVisitedProcs; i++)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (visitedProcs[i] == checkProc)<span class="comment">//进程重复出现</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (i == <span class="number">0</span>)<span class="comment">//是待检测的进程，出现了环</span></span><br><span class="line">		&#123;</span><br><span class="line">			nDeadlockDetails = depth;</span><br><span class="line"></span><br><span class="line">			<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果不存在环，将待测进程保存到visitedProcs数组中</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">visitedProcs[nVisitedProcs++] = checkProc;<span class="comment">//没有检测到环，将检测进程存入visitedProcs数组</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果要检查的进程处于等待状态，那么就递归检测他的等待队列</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (checkProc-&gt;links.next != <span class="literal">NULL</span> &amp;&amp; checkProc-&gt;waitLock != <span class="literal">NULL</span> &amp;&amp;</span><br><span class="line">	FindLockCycleRecurseMember(checkProc, checkProc, depth, softEdges,</span><br><span class="line">							   nSoftEdges))</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果待测进程是锁组中的一部分，遍历锁组的每个成员进程，检查是否存在环</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> 如果进程没有等待，但是是锁组的一部分，还是有可能出现等待依赖边，尽管这个进程本身没有等待。</span><br><span class="line"> */</span><br><span class="line">dlist_foreach(iter, &amp;checkProc-&gt;lockGroupMembers)<span class="comment">//遍历每个group成员</span></span><br><span class="line">&#123;</span><br><span class="line">	PGPROC	   *memberProc;</span><br><span class="line"></span><br><span class="line">	memberProc = dlist_container(PGPROC, lockGroupLink, iter.cur);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (memberProc-&gt;links.next != <span class="literal">NULL</span> &amp;&amp; memberProc-&gt;waitLock != <span class="literal">NULL</span> &amp;&amp;</span><br><span class="line">		memberProc != checkProc &amp;&amp;</span><br><span class="line">		FindLockCycleRecurseMember(memberProc, checkProc, depth, softEdges,</span><br><span class="line">								   nSoftEdges))<span class="comment">//递归检测是否有环</span></span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="FindLockCycleRecurseMember"><a href="#FindLockCycleRecurseMember" class="headerlink" title="FindLockCycleRecurseMember"></a>FindLockCycleRecurseMember</h3><p>递归检查是否存在环。</p>
+<ul>
+<li>获取锁的进程锁表，即锁模式冲突掩码</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">lockMethodTable = GetLocksMethodTable(lock);<span class="comment">//获取锁方法</span></span><br><span class="line">numLockModes = lockMethodTable-&gt;numLockModes;<span class="comment">//获取锁模式数量</span></span><br><span class="line">conflictMask = lockMethodTable-&gt;conflictTab[checkProc-&gt;waitLockMode];<span class="comment">//获取与等待的锁模式冲突的掩码</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>遍历检查锁的等待队列的每个进程，如果待测进程等待的锁与当前持有的锁模式冲突，递归调用FindLockCycleRecurse函数检查是否存在环，如果存在返回实边死锁信息。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">procLocks = &amp;(lock-&gt;procLocks);<span class="comment">//获取进程锁表</span></span><br><span class="line"></span><br><span class="line">	proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,</span><br><span class="line">										 offsetof(PROCLOCK, lockLink));</span><br><span class="line"></span><br><span class="line">	<span class="keyword">while</span> (proclock)<span class="comment">//遍历检查进程的等待队列的每个进程是否有死锁</span></span><br><span class="line">	&#123;</span><br><span class="line">		PGPROC	   *leader;</span><br><span class="line">		proc = proclock-&gt;tag.myProc;</span><br><span class="line">		leader = proc-&gt;lockGroupLeader == <span class="literal">NULL</span> ? proc : proc-&gt;lockGroupLeader;</span><br><span class="line">		<span class="keyword">if</span> (leader != checkProcLeader)<span class="comment">//同组的不检查</span></span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">for</span> (lm = <span class="number">1</span>; lm &lt;= numLockModes; lm++)<span class="comment">//遍历每一个锁模式</span></span><br><span class="line">			&#123;</span><br><span class="line">				<span class="keyword">if</span> ((proclock-&gt;holdMask &amp; LOCKBIT_ON(lm)) &amp;&amp;</span><br><span class="line">					(conflictMask &amp; LOCKBIT_ON(lm)))<span class="comment">//如果出现锁冲突，持有的锁与当前进程要等的锁模式冲突，实边</span></span><br><span class="line">				&#123;</span><br><span class="line">					<span class="keyword">if</span> (FindLockCycleRecurse(proc, depth + <span class="number">1</span>,</span><br><span class="line">											 softEdges, nSoftEdges))<span class="comment">//递归检查</span></span><br><span class="line">					&#123;</span><br><span class="line">						DEADLOCK_INFO *info = &amp;deadlockDetails[depth];<span class="comment">//有死锁，填充死锁相关信息</span></span><br><span class="line"></span><br><span class="line">						info-&gt;locktag = lock-&gt;tag;</span><br><span class="line">						info-&gt;lockmode = checkProc-&gt;waitLockMode;</span><br><span class="line">						info-&gt;pid = checkProc-&gt;pid;</span><br><span class="line"></span><br><span class="line">						<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">					&#125;</span><br><span class="line">					<span class="keyword">if</span> (checkProc == MyProc &amp;&amp;</span><br><span class="line">						proc-&gt;statusFlags &amp; PROC_IS_AUTOVACUUM)<span class="comment">//没有死锁，但是判断是否有autovacuum进程阻塞我们</span></span><br><span class="line">						blocking_autovacuum_proc = proc;</span><br><span class="line">					<span class="keyword">break</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		proclock = (PROCLOCK *) SHMQueueNext(procLocks, &amp;proclock-&gt;lockLink,</span><br><span class="line">											 offsetof(PROCLOCK, lockLink));</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>找到当前锁的等待队列waitOrders[i]，然后遍历等待队列的每个进程，如果遍历的进程等待的锁模式与待测进程锁模式冲突，递归调用FindLockCycleRecurse函数，检查是否存在环，如果存在，则为虚边死锁，将虚边保存到possibleConstraints数组中</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nWaitOrders; i++)<span class="comment">//从等待队列中找到当前锁所在的等待队列</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (waitOrders[i].lock == lock)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (i &lt; nWaitOrders)<span class="comment">//判断是否找到对应的等待队列</span></span><br><span class="line">	&#123;</span><br><span class="line">		PGPROC	  **procs = waitOrders[i].procs;</span><br><span class="line"></span><br><span class="line">		queue_size = waitOrders[i].nProcs;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; queue_size; i++)<span class="comment">//遍历等待队列中的每个进程</span></span><br><span class="line">		&#123;</span><br><span class="line">			PGPROC	   *leader;</span><br><span class="line"></span><br><span class="line">			proc = procs[i];</span><br><span class="line">			leader = proc-&gt;lockGroupLeader == <span class="literal">NULL</span> ? proc :</span><br><span class="line">				proc-&gt;lockGroupLeader;</span><br><span class="line">			<span class="keyword">if</span> (leader == checkProcLeader) </span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">if</span> ((LOCKBIT_ON(proc-&gt;waitLockMode) &amp; conflictMask) != <span class="number">0</span>)<span class="comment">//等待的锁模式与待测进程的锁模式判断是否存在冲突</span></span><br><span class="line">			&#123;</span><br><span class="line">				<span class="comment">/* This proc soft-blocks checkProc */</span></span><br><span class="line">				<span class="keyword">if</span> (FindLockCycleRecurse(proc, depth + <span class="number">1</span>,</span><br><span class="line">										 softEdges, nSoftEdges))<span class="comment">//递归检查是否存在虚边环</span></span><br><span class="line">				&#123;</span><br><span class="line">					<span class="comment">/* fill deadlockDetails[] */</span></span><br><span class="line">					DEADLOCK_INFO *info = &amp;deadlockDetails[depth];<span class="comment">//记录虚边死锁信息</span></span><br><span class="line"></span><br><span class="line">					info-&gt;locktag = lock-&gt;tag;</span><br><span class="line">					info-&gt;lockmode = checkProc-&gt;waitLockMode;</span><br><span class="line">					info-&gt;pid = checkProc-&gt;pid;</span><br><span class="line"></span><br><span class="line">					<span class="comment">/*</span></span><br><span class="line"><span class="comment">					 即添加到possibleConstraints数组</span></span><br><span class="line"><span class="comment">					 */</span></span><br><span class="line">					Assert(*nSoftEdges &lt; MaxBackends);</span><br><span class="line">					softEdges[*nSoftEdges].waiter = checkProcLeader;<span class="comment">//保存虚边信息到即添加到possibleConstraints数组数组</span></span><br><span class="line">					softEdges[*nSoftEdges].blocker = leader;</span><br><span class="line">					softEdges[*nSoftEdges].lock = lock;</span><br><span class="line">					(*nSoftEdges)++;</span><br><span class="line">					<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果waitOrders[i]中不存在当前锁的等待队列，找到该锁组的最后一个进程，检查他的等待队列的每个进程，如果遍历的进程等待的锁模式与待测进程锁模式冲突，调用FindLockCycleRecurse函数，检查是否存在环，如果存在，则为虚边死锁，将虚边保存到possibleConstraints数组中</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span><span class="comment">//等待队列中没找到当前进程</span></span><br><span class="line">	&#123;</span><br><span class="line">		PGPROC	   *lastGroupMember = <span class="literal">NULL</span>;</span><br><span class="line">		waitQueue = &amp;(lock-&gt;waitProcs);</span><br><span class="line">		 <span class="comment">//查找锁组的最后一个成员</span></span><br><span class="line">		<span class="keyword">if</span> (checkProc-&gt;lockGroupLeader == <span class="literal">NULL</span>)</span><br><span class="line">			lastGroupMember = checkProc;</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">		&#123;</span><br><span class="line">			proc = (PGPROC *) waitQueue-&gt;links.next;</span><br><span class="line">			queue_size = waitQueue-&gt;size;</span><br><span class="line">			<span class="keyword">while</span> (queue_size-- &gt; <span class="number">0</span>)</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="keyword">if</span> (proc-&gt;lockGroupLeader == checkProcLeader)</span><br><span class="line">					lastGroupMember = proc;</span><br><span class="line">				proc = (PGPROC *) proc-&gt;links.next;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		queue_size = waitQueue-&gt;size;</span><br><span class="line">		proc = (PGPROC *) waitQueue-&gt;links.next;</span><br><span class="line">		<span class="keyword">while</span> (queue_size-- &gt; <span class="number">0</span>)<span class="comment">//遍历等待队列，查找虚边冲突</span></span><br><span class="line">		&#123;</span><br><span class="line">			PGPROC	   *leader;</span><br><span class="line"></span><br><span class="line">			leader = proc-&gt;lockGroupLeader == <span class="literal">NULL</span> ? proc :</span><br><span class="line">				proc-&gt;lockGroupLeader;</span><br><span class="line"></span><br><span class="line">			<span class="comment">/* Done when we reach the target proc */</span></span><br><span class="line">			<span class="keyword">if</span> (proc == lastGroupMember)</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			<span class="keyword">if</span> ((LOCKBIT_ON(proc-&gt;waitLockMode) &amp; conflictMask) != <span class="number">0</span> &amp;&amp;</span><br><span class="line">				leader != checkProcLeader)<span class="comment">//锁冲突</span></span><br><span class="line">			&#123;</span><br><span class="line">				<span class="keyword">if</span> (FindLockCycleRecurse(proc, depth + <span class="number">1</span>,</span><br><span class="line">										 softEdges, nSoftEdges))<span class="comment">//检查是否有虚边锁</span></span><br><span class="line">				&#123;</span><br><span class="line">					DEADLOCK_INFO *info = &amp;deadlockDetails[depth];<span class="comment">//报错虚边死锁信息</span></span><br><span class="line"></span><br><span class="line">					info-&gt;locktag = lock-&gt;tag;</span><br><span class="line">					info-&gt;lockmode = checkProc-&gt;waitLockMode;</span><br><span class="line">					info-&gt;pid = checkProc-&gt;pid;</span><br><span class="line">					softEdges[*nSoftEdges].waiter = checkProcLeader;<span class="comment">//保存虚边信息到即添加到possibleConstraints数组数组</span></span><br><span class="line">					softEdges[*nSoftEdges].blocker = leader;</span><br><span class="line">					softEdges[*nSoftEdges].lock = lock;</span><br><span class="line">					(*nSoftEdges)++;</span><br><span class="line">					<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			proc = (PGPROC *) proc-&gt;links.next;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>无死锁</li>
+</ul>
+<h3 id="ExpandConstraints"><a href="#ExpandConstraints" class="headerlink" title="ExpandConstraints"></a>ExpandConstraints</h3><p>将边CurConstraints扩展为对受影响等待队列的新排序<br>即将CurConstraints中的每个边加入到等待队列中，然后对等待队列进行拓扑排序</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = nConstraints; --i &gt;= <span class="number">0</span>;)<span class="comment">//遍历每个虚边死锁的边</span></span><br><span class="line">&#123;</span><br><span class="line">	LOCK	   *lock = constraints[i].lock;</span><br><span class="line">	<span class="keyword">for</span> (j = nWaitOrders; --j &gt;= <span class="number">0</span>;)<span class="comment">//确认等待队列中是否已经有了它</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (waitOrders[j].lock == lock)</span><br><span class="line">			<span class="keyword">break</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> (j &gt;= <span class="number">0</span>)<span class="comment">//没遍历完，继续</span></span><br><span class="line">		<span class="keyword">continue</span>;</span><br><span class="line">	<span class="comment">//存入等待队列中</span></span><br><span class="line">	waitOrders[nWaitOrders].lock = lock;</span><br><span class="line">	waitOrders[nWaitOrders].procs = waitOrderProcs + nWaitOrderProcs;</span><br><span class="line">	waitOrders[nWaitOrders].nProcs = lock-&gt;waitProcs.size;</span><br><span class="line">	nWaitOrderProcs += lock-&gt;waitProcs.size;</span><br><span class="line">	<span class="keyword">if</span> (!TopoSort(lock, constraints, i + <span class="number">1</span>,</span><br><span class="line">				  waitOrders[nWaitOrders].procs))<span class="comment">//进行拓扑排序</span></span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	nWaitOrders++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="TopoSort"><a href="#TopoSort" class="headerlink" title="TopoSort"></a>TopoSort</h3><p>当存在虚边环时，会对每个虚边调用该函数对等待队列进行重新排序，从而尝试解开虚边环。</p>
+<ul>
+<li>将要处理的Lock的等待队列存入topoProcs数组中</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">proc = (PGPROC *) waitQueue-&gt;links.next;</span><br><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; queue_size; i++)<span class="comment">//将锁的等待队列中的每个进程都保存到topoProcs数组中</span></span><br><span class="line">&#123;</span><br><span class="line">	topoProcs[i] = proc;</span><br><span class="line">	proc = (PGPROC *) proc-&gt;links.next;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>初始化beforeConstraints和afterConstraints，这两个数组与topoProcs长度相等，下面要用</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">MemSet(beforeConstraints, <span class="number">0</span>, queue_size * <span class="keyword">sizeof</span>(<span class="type">int</span>));<span class="comment">//初始化这俩变量，下面要用</span></span><br><span class="line">MemSet(afterConstraints, <span class="number">0</span>, queue_size * <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>遍历每一个虚边<ul>
+<li>判断虚边的waiter或他的groupleader是否在等待队列中，如果在里面，根据其在等待队列中的位置将beforeConstraints对应位置值+1；如果是锁组的成员，对应值置为-1；如果不在里面，跳过当前虚边，继续下一循环</li>
+<li>如果虚边的blocker或他的groupleader是否在等待队列中，如果在里面，根据其在等待队列中的位置将afterConstraints对应位置值置为其下标值+1</li>
+<li>将该虚边的pred的值置为waiter在等待队列中的位置下标，link置为afterConstraints对应位置的值。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; nConstraints; i++)<span class="comment">//遍历每一个边</span></span><br><span class="line">	&#123;</span><br><span class="line">		proc = constraints[i].waiter;</span><br><span class="line">		Assert(proc != <span class="literal">NULL</span>);</span><br><span class="line">		jj = <span class="number">-1</span>;</span><br><span class="line">		<span class="keyword">for</span> (j = queue_size; --j &gt;= <span class="number">0</span>;)<span class="comment">//遍历等待队列中的每个进程，与虚边的waiter对比</span></span><br><span class="line">		&#123;</span><br><span class="line">			PGPROC	   *waiter = topoProcs[j];</span><br><span class="line"></span><br><span class="line">			<span class="keyword">if</span> (waiter == proc || waiter-&gt;lockGroupLeader == proc)</span><br><span class="line">			&#123;<span class="comment">//如果waiter等于等待队列中的某个进程或他的组长，表示是一个该等待队列相关的边</span></span><br><span class="line">				Assert(waiter-&gt;waitLock == lock);</span><br><span class="line">				<span class="keyword">if</span> (jj == <span class="number">-1</span>)<span class="comment">//是第一个，将jj标记为该进程在等待队列中的位置</span></span><br><span class="line">					jj = j;</span><br><span class="line">				<span class="keyword">else</span><span class="comment">//其他的锁组成员标记为-1</span></span><br><span class="line">				&#123;</span><br><span class="line">					Assert(beforeConstraints[j] &lt;= <span class="number">0</span>);</span><br><span class="line">					beforeConstraints[j] = <span class="number">-1</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (jj &lt; <span class="number">0</span>)<span class="comment">//没有相关的等待者，表名与当前锁无关</span></span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">/*</span></span><br><span class="line"><span class="comment">		 同理，判断被等待者进程</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		proc = constraints[i].blocker;</span><br><span class="line">		Assert(proc != <span class="literal">NULL</span>);</span><br><span class="line">		kk = <span class="number">-1</span>;</span><br><span class="line">		<span class="keyword">for</span> (k = queue_size; --k &gt;= <span class="number">0</span>;)<span class="comment">//遍历等待队列中的每个进程，与虚边的blocker对比</span></span><br><span class="line">		&#123;</span><br><span class="line">			PGPROC	   *blocker = topoProcs[k];</span><br><span class="line"></span><br><span class="line">			<span class="keyword">if</span> (blocker == proc || blocker-&gt;lockGroupLeader == proc)</span><br><span class="line">			&#123;<span class="comment">//如果blocker等于等待队列中的某个进程或他的组长，表示是一个该等待队列相关的边</span></span><br><span class="line">				Assert(blocker-&gt;waitLock == lock);</span><br><span class="line">				<span class="keyword">if</span> (kk == <span class="number">-1</span>)<span class="comment">//是第一个，将kk标记为该进程在等待队列中的位置</span></span><br><span class="line">					kk = k;</span><br><span class="line">				<span class="keyword">else</span><span class="comment">//其他的锁组成员标记为-1</span></span><br><span class="line">				&#123;</span><br><span class="line">					Assert(beforeConstraints[k] &lt;= <span class="number">0</span>);</span><br><span class="line">					beforeConstraints[k] = <span class="number">-1</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (kk &lt; <span class="number">0</span>)<span class="comment">//没有匹配的边，说明与当前锁无关</span></span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">		Assert(beforeConstraints[jj] &gt;= <span class="number">0</span>);</span><br><span class="line">		beforeConstraints[jj]++;	<span class="comment">/* 如果waiter进程在topoProcs中，这里就+1*/</span></span><br><span class="line">		constraints[i].pred = jj;<span class="comment">//保存虚边的water在等待队列中的位置</span></span><br><span class="line">		constraints[i].link = afterConstraints[kk];<span class="comment">//指向afterConstraints</span></span><br><span class="line">		afterConstraints[kk] = i + <span class="number">1</span>;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>开始进行拓扑排序，遍历每个等待队列中的进程<ul>
+<li>从等待队列的尾部开始遍历，找到第一个非空的进程</li>
+<li>如果进程非空且其在beforeConstraints对应位置的值为0时，满足排序要求，将进程存入到waiterOrder队列中，然后将topoProcs中的对应位置置为空。</li>
+<li>更新beforeConstraints中的值。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">last = queue_size - <span class="number">1</span>;</span><br><span class="line">	<span class="keyword">for</span> (i = queue_size - <span class="number">1</span>; i &gt;= <span class="number">0</span>;)<span class="comment">//遍历topoProcs数组，反向遍历</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">int</span>			c;</span><br><span class="line">		<span class="type">int</span>			nmatches = <span class="number">0</span>;</span><br><span class="line">		<span class="keyword">while</span> (topoProcs[last] == <span class="literal">NULL</span>)<span class="comment">//找到第一个非空的进程</span></span><br><span class="line">			last--;</span><br><span class="line">		<span class="keyword">for</span> (j = last; j &gt;= <span class="number">0</span>; j--)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">if</span> (topoProcs[j] != <span class="literal">NULL</span> &amp;&amp; beforeConstraints[j] == <span class="number">0</span>)<span class="comment">//第一个不在虚边的</span></span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (j &lt; <span class="number">0</span>)<span class="comment">//遍历完也没有不在虚边的</span></span><br><span class="line">			<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">		proc = topoProcs[j];</span><br><span class="line">		<span class="keyword">if</span> (proc-&gt;lockGroupLeader != <span class="literal">NULL</span>)<span class="comment">//如果是锁组，获取其组长</span></span><br><span class="line">			proc = proc-&gt;lockGroupLeader;</span><br><span class="line">		Assert(proc != <span class="literal">NULL</span>);</span><br><span class="line">		<span class="keyword">for</span> (c = <span class="number">0</span>; c &lt;= last; ++c)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">if</span> (topoProcs[c] == proc || (topoProcs[c] != <span class="literal">NULL</span> &amp;&amp;</span><br><span class="line">										 topoProcs[c]-&gt;lockGroupLeader == proc))<span class="comment">//当前进程或当前组长进程</span></span><br><span class="line">			&#123;</span><br><span class="line">				ordering[i - nmatches] = topoProcs[c];<span class="comment">//存入ordering数组即waitOrders[xx].procs</span></span><br><span class="line">				topoProcs[c] = <span class="literal">NULL</span>;</span><br><span class="line">				++nmatches;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		Assert(nmatches &gt; <span class="number">0</span>);</span><br><span class="line">		i -= nmatches;</span><br><span class="line">		<span class="keyword">for</span> (k = afterConstraints[j]; k &gt; <span class="number">0</span>; k = constraints[k - <span class="number">1</span>].link)</span><br><span class="line">			beforeConstraints[constraints[k - <span class="number">1</span>].pred]--;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p>查找环时找到一个虚边环，虚边为D-&gt;A, 虚边保存在CurContraints<br><img src="https://i-blog.csdnimg.cn/direct/70fb536e09e24f239db11f9cc0c7bdeb.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>针对该虚边，遍历waiterOrders数组中的每个等待队列，并进行拓扑排序，这里假设有等待队列如下图<br><img src="https://i-blog.csdnimg.cn/direct/3734fae3e86b4a469014482f81ef0bd5.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>遍历等待队列中的每个进程并与边进行比较，将符合要求的信息存入beforeConstraints和afterConstraints，并更新curContraints的pred和link字段<br><img src="https://i-blog.csdnimg.cn/direct/e5d4725158454a32962ac9b22eb6fcf6.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>然后对等待队列进行排序，排序后的队列为<br><img src="https://i-blog.csdnimg.cn/direct/96caa728d87648dc851658c8f9babc65.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+<li><p>这样警告拓扑排序后的等待关系就变成了，下图，环被消除了，从而解决了死锁。<br><img src="https://i-blog.csdnimg.cn/direct/bdf27d7e013f44ac95405ab8518cd90a.png#pic_center" alt="在这里插入图片描述"></p>
+</li>
+</ol>
+<h3 id="死锁检测示例"><a href="#死锁检测示例" class="headerlink" title="死锁检测示例"></a>死锁检测示例</h3><p>下面是根据上面的例子，得到的函数运行流程<br><img src="https://i-blog.csdnimg.cn/direct/99001e18554f4893baae67bae9728303.png#pic_center" alt="在这里插入图片描述"></p>
+<ul>
+<li>进程：A，B， C</li>
+<li>锁Lock1,Lock2</li>
+<li>Lock1锁等待关系： C-&gt;A-&gt;B</li>
+<li>Lock2锁等待关系: B -&gt;C</li>
+<li>假设当前进程是A触发的死锁检测。<br>死锁检测流程如下：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line">* DeadLockCheck</span><br><span class="line">** DeadLockCheckRecurse</span><br><span class="line">*** TestConfiguration(A)</span><br><span class="line">**** FindLockCycle（A，NULL，0）</span><br><span class="line">***** nVisitedProcs = 0;</span><br><span class="line">***** nDeadlockDetails = 0;</span><br><span class="line">****** possibleConstraints = 0;</span><br><span class="line">***** FindLockCycleRecurse（A，0，NULL，0）</span><br><span class="line">****** visitedProcs[0] = A </span><br><span class="line">****** FindLockCycleRecurseMember(A ,A ,0,NULL,0) //事务A等待的Lock1锁的等待队列</span><br><span class="line">****** Lock1的等待队列是：C-&gt;A</span><br><span class="line">******* 无实边冲突</span><br><span class="line">******* nWaitOrders=0</span><br><span class="line">******* 获取Lock1的等待队列：A&lt;-C </span><br><span class="line">******* FindLockCycleRecurse（C，1，NULL，0）</span><br><span class="line">******* visitedProcs[0] = A</span><br><span class="line">******* visitedProcs[0] = C</span><br><span class="line">******* FindLockCycleRecurseMember(C ,C ,1,NULL,0) //事务C等待的Lock1锁的等待队列</span><br><span class="line">******* Lock1的等待队列是：C-&gt;A</span><br><span class="line">******** 无实边冲突</span><br><span class="line">******** nWaitOrders=0</span><br><span class="line">******** 获取Lock1的等待队列：A&lt;-C</span><br><span class="line">******** FindLockCycleRecurse（A，2，NULL，0）</span><br><span class="line">********* visitedProcs[0] = A</span><br><span class="line">********* visitedProcs[0] = C	</span><br><span class="line">********* 在visitedProcs出现过且为起始位置，返回死锁，ndeadlockDetails=2, return true</span><br><span class="line">******** deadlockDetails[0]记录虚边死锁信息 </span><br><span class="line">******** possibleConstraints[0]：waiter=C , blocker=A, lock=lock1 ;nPossibleConstraints=1</span><br><span class="line">******** return true </span><br><span class="line">******** return true </span><br><span class="line">******* return true </span><br><span class="line">****** return true </span><br><span class="line">***** return true </span><br><span class="line">**** return 1</span><br><span class="line">*** nPossibleConstraints = 1</span><br><span class="line">*** curConstraints[0]=possibleConstraints[0]=waiter=C , blocker=A, lock=lock1 </span><br><span class="line">*** nCurConstraints++</span><br><span class="line">*** DeadLockCheckRecurse(A) </span><br><span class="line">**** TestConfiguration(A)</span><br><span class="line">***** ExpandConstraints(curConstraints,1)</span><br><span class="line">****** nWaitOrders</span><br><span class="line">****** waitOrders[0]=lock=lock1, procs=waitOrderProcs + nWaitOrderProcs ,nprocs=2</span><br><span class="line">****** nWaitOrderProcs += 2 =2</span><br><span class="line">****** TopoSort(lock1,curConstraints,2,waitOrderProcs)</span><br><span class="line">******* topoProcs[0] = A </span><br><span class="line">******* topoProcs[1] = C</span><br><span class="line">******* beforeConstraints[0] = 0</span><br><span class="line">******* beforeConstraints[1] = 1</span><br><span class="line">******* afterConstraints[0] = 1</span><br><span class="line">******* afterConstraints[1] = 0</span><br><span class="line">******* curConstraints[0].pred = 1</span><br><span class="line">******* curConstraints[0].link = 0</span><br><span class="line">******* 开始拓扑排序</span><br><span class="line">******* 第一次找到进程A</span><br><span class="line">******* waitOrderProcs[1] = A</span><br><span class="line">******* 第二次找到进程C</span><br><span class="line">******* waitOrderProcs[0] = C</span><br><span class="line">******* 最终虚边顺序调整</span><br><span class="line">******* return true </span><br><span class="line">****** nWaitOrders++</span><br><span class="line">****** return true</span><br><span class="line">***** FindLockCycle(curConstraints[i].waiter=C, softEdges, &amp;nSoftEdges=1)</span><br><span class="line">****** nVisitedProcs = 0;</span><br><span class="line">****** nDeadlockDetails = 0;</span><br><span class="line">****** possibleConstraints = 0;</span><br><span class="line">****** FindLockCycleRecurse（C，0，NULL，0）</span><br><span class="line">******* visitedProcs[0] = C </span><br><span class="line">******* FindLockCycleRecurseMember(C ,C ,0,NULL,0) //事务A等待的Lock1锁的等待队列</span><br><span class="line">******** Lock1的等待队列是：C-&gt;A				</span><br><span class="line">******** 无实边冲突</span><br><span class="line">******** nWaitOrders=1	</span><br><span class="line">******** FindLockCycleRecurse（A，1，NULL，0）</span><br><span class="line">********* visitedProcs[0] = C </span><br><span class="line">********* visitedProcs[1] = A</span><br><span class="line">********* FindLockCycleRecurseMember(A ,A ,0,NULL,0) //事务A等待的Lock1锁的等待队列</span><br><span class="line">********** Lock1的等待队列是：C-&gt;A				</span><br><span class="line">********** 无实边冲突</span><br><span class="line">********** nWaitOrders=1	</span><br><span class="line">********** break;</span><br><span class="line">********** return false</span><br><span class="line">********* return false </span><br><span class="line">******** return false </span><br><span class="line">******* return false </span><br><span class="line">****** return false </span><br><span class="line">***** FindLockCycle(curConstraints[i].blocker=A, softEdges, &amp;nSoftEdges=1)</span><br><span class="line">***** FindLockCycle(A, softEdges, &amp;nSoftEdges=1))</span><br><span class="line">****** FindLockCycleRecurse（A，1，NULL，0）</span><br><span class="line">******* visitedProcs[0] = A</span><br><span class="line">******* FindLockCycleRecurseMember(A ,A ,0,NULL,0) //事务A等待的Lock1锁的等待队列</span><br><span class="line">******** Lock1的等待队列是：C-&gt;A				</span><br><span class="line">******** 无实边冲突</span><br><span class="line">******** nWaitOrders=1	</span><br><span class="line">******** break;</span><br><span class="line">******** return false</span><br><span class="line">******* return false 	</span><br><span class="line">****** return false</span><br><span class="line">***** return 0</span><br><span class="line">**** return false 无死锁</span><br><span class="line">*** return false</span><br><span class="line">** nWaitOrders=1</span><br><span class="line">** 根据排序后的waitOrders，重排Lock1的等待队列为A-&gt;C</span><br><span class="line">** 唤醒可以被唤醒的进程。</span><br><span class="line">** return DS_SOFT_DEADLOCK 有虚边死锁 </span><br><span class="line">* done</span><br></pre></td></tr></table></figure>
+
+<p>【参考】</p>
+<ol>
+<li>《PostgreSQL数据库内核分析》</li>
+<li>《Postgresql技术内幕-事务处理深度探索》</li>
+<li>《PostgreSQL指南：内幕探索》</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/postgres/postgres/tree/REL_14_5">pg14源码</a></li>
+</ol>
+
+        </div>
+    
+<!-- tags -->
+
+    <div class="post-meta">
+        标签：
+        
+            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/"> / 数据库</a>
+        
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2023 Leaout&#39;s Blog</span>
+    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

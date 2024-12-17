@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="robots" content="index, follow">
+  <!-- title -->
+  
+    
+  <title>timescaledb vs influxdb 性能测试 - Leaout&#39;s Blog</title>
+    
+  
+  
+  <!-- open graph -->
+  <meta name="description" content="influxdb 性能测试参考https:&#x2F;&#x2F;github.com&#x2F;GreptimeTeam&#x2F;tsbs&#x2F;blob&#x2F;master&#x2F;docs&#x2F;greptimedb-vs-influxdb-manual-zh.md 测试机器配置 客户端 192.168.1.111  服务器 192.168.1.112 1.下载安装https:&#x2F;&#x2F;dl.influxdata.com&#x2F;influxdb&#x2F;releases&#x2F;i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="timescaledb vs influxdb 性能测试">
+<meta property="og:url" content="http://example.com/2024/12/17/timeseries_bench/index.html">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+<meta property="og:description" content="influxdb 性能测试参考https:&#x2F;&#x2F;github.com&#x2F;GreptimeTeam&#x2F;tsbs&#x2F;blob&#x2F;master&#x2F;docs&#x2F;greptimedb-vs-influxdb-manual-zh.md 测试机器配置 客户端 192.168.1.111  服务器 192.168.1.112 1.下载安装https:&#x2F;&#x2F;dl.influxdata.com&#x2F;influxdb&#x2F;releases&#x2F;i">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2024-12-17T02:46:05.721Z">
+<meta property="article:author" content="chenliangyu">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+  <!-- canonical -->
+  
+  <link rel="canonical" href="http://example.com/2024/12/17/timeseries_bench/">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <!-- CSS -->
+  
+<link rel="stylesheet" href="/css/reset.css">
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<link rel="stylesheet" href="/css/markdown.css">
+
+  
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">Leaout&#39;s Blog</a>
+    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
+        <ul class="nav">
+            
+            <li><a href="/">Home</a></li>
+            
+            <li><a href="/about/">About</a></li>
+            
+            <li><a href="/archives">Archives</a></li>
+            
+        </ul>
+
+
+    </a>
+</div>
+
+                
+                <div class="post-main">
+    
+        <div class="post-main-title">
+            timescaledb vs influxdb 性能测试
+        </div>
+        <div class="post-meta">
+            2024-12-17 ｜ 
+            
+        </div>
+        <!-- 圆角分类 -->
+        <!-- <div class="tags"> -->
+            <!--  -->
+        <!-- </div> -->
+        <div class="post-md">
+            <h1 id="influxdb-性能测试"><a href="#influxdb-性能测试" class="headerlink" title="influxdb 性能测试"></a>influxdb 性能测试</h1><p>参考<a target="_blank" rel="noopener" href="https://github.com/GreptimeTeam/tsbs/blob/master/docs/greptimedb-vs-influxdb-manual-zh.md">https://github.com/GreptimeTeam/tsbs/blob/master/docs/greptimedb-vs-influxdb-manual-zh.md</a></p>
+<h2 id="测试机器配置"><a href="#测试机器配置" class="headerlink" title="测试机器配置"></a>测试机器配置</h2><p> 客户端 192.168.1.111</p>
+<p> 服务器 192.168.1.112</p>
+<h2 id="1-下载安装"><a href="#1-下载安装" class="headerlink" title="1.下载安装"></a>1.下载安装</h2><p><a target="_blank" rel="noopener" href="https://dl.influxdata.com/influxdb/releases/influxdb2-2.7.10-1.x86_64.rpm">https://dl.influxdata.com/influxdb/releases/influxdb2-2.7.10-1.x86_64.rpm</a><br>rpm -ivh influxdb2-2.7.10-1.x86_64.rpm<br>下载client<br>wget <a target="_blank" rel="noopener" href="https://download.influxdata.com/influxdb/releases/influxdb2-client-2.7.5-linux-amd64.tar.gz">https://download.influxdata.com/influxdb/releases/influxdb2-client-2.7.5-linux-amd64.tar.gz</a><br>tar xvfz influxdb2-client-2.7.5-linux-amd64.tar.gz<br>启动服务<br>systemctl start influxdb</p>
+<h2 id="2-生成测试数据"><a href="#2-生成测试数据" class="headerlink" title="2.生成测试数据"></a>2.生成测试数据</h2><p>安装go<br>yum install go<br>拉取代码生成go测试数据<br>git clone <a target="_blank" rel="noopener" href="https://github.com/GreptimeTeam/tsbs.git">https://github.com/GreptimeTeam/tsbs.git</a><br>编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#设置国内源</span><br><span class="line">export GOPROXY=https://goproxy.cn</span><br><span class="line">cd tsbs &amp;&amp; make</span><br></pre></td></tr></table></figure>
+<h3 id="生成数据"><a href="#生成数据" class="headerlink" title="生成数据"></a>生成数据</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">mkdir bench-data</span><br><span class="line">#运行生成数据的命令，其中 influx-data.lp 就是我们生成的测试数据文件，该数据文件用于单机测试：</span><br><span class="line">./bin/tsbs_generate_data --use-case=&quot;cpu-only&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-15T00:00:00Z&quot; --log-interval=&quot;10s&quot; --format=&quot;influx&quot; &gt; ./bench-data/influx-data.lp</span><br><span class="line">#执行以下命令生成用于 InfluxDB 的查询：</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-cpu-max-all-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-8 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-cpu-max-all-8.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-double-groupby-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-5 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-double-groupby-5.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-all --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-double-groupby-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type groupby-orderby-limit --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-groupby-orderby-limit.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type high-cpu-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-high-cpu-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type high-cpu-all --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-high-cpu-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=10 --query-type lastpoint --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-lastpoint.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-1-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-12 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-1-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-8-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-1-8-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-5-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-12 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-5-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-8-1 --format=&quot;influx&quot; &gt; ./bench-data/influx-queries-single-groupby-5-8-1.dat</span><br><span class="line"></span><br><span class="line">//执行以下命令生成用于生成用于 GreptimeDB 的查询：</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-cpu-max-all-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-8 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-cpu-max-all-8.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-double-groupby-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-5 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-double-groupby-5.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-all --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-double-groupby-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type groupby-orderby-limit --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-groupby-orderby-limit.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type high-cpu-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-high-cpu-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type high-cpu-all --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-high-cpu-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=10 --query-type lastpoint --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-lastpoint.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-1-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-12 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-1-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-8-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-1-8-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-5-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-12 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-5-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;</span><br><span class="line">T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type </span><br><span class="line">single-groupby-5-8-1 --format=&quot;greptime&quot; &gt; ./bench-data/greptime-queries-single-groupby-5-8-1.dat</span><br><span class="line"></span><br><span class="line">idb查询生成</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-cpu-max-all-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type cpu-max-all-8 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-cpu-max-all-8.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-double-groupby-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-5 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-double-groupby-5.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type double-groupby-all --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-double-groupby-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type groupby-orderby-limit --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-groupby-orderby-limit.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type high-cpu-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-high-cpu-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=50 --query-type high-cpu-all --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-high-cpu-all.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=10 --query-type lastpoint --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-lastpoint.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-1-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-1-12 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-1-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-1-8-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-1-8-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-5-1-1.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-1-12 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-5-1-12.dat</span><br><span class="line">./bin/tsbs_generate_queries --use-case=&quot;devops&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-14T00:00:01Z&quot; --queries=100 --query-type single-groupby-5-8-1 --format=&quot;timescaledb&quot; &gt; ./bench-data/timescaledb-queries-single-groupby-5-8-1.dat</span><br></pre></td></tr></table></figure>
+<h1 id="InfluxDB"><a href="#InfluxDB" class="headerlink" title="InfluxDB"></a>InfluxDB</h1><h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>InfluxDB 初次安装后需要初始化 InfluxDB 并拿到请求的 token，如果已经有 token 则可以跳过这部分。</p>
+<p>初始化 InfluxDB：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf influxdb2-client-2.7.5-linux-amd64.tar.gz</span><br><span class="line"></span><br><span class="line">./influx setup \</span><br><span class="line">  --username test \</span><br><span class="line">  --password 12345678 \</span><br><span class="line">  --token test-token \</span><br><span class="line">  --org test-org \</span><br><span class="line">  --bucket test-bucket \</span><br><span class="line">  --force</span><br></pre></td></tr></table></figure>
+<p>输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">User    Organization    Bucket</span><br><span class="line">test    test-org        test-bucket</span><br></pre></td></tr></table></figure>
+<p>创建 token：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./influx auth create \</span><br><span class="line">  --org test-org \</span><br><span class="line">  --all-access</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ID                      Description     Token                                                                                           User Name      User ID                  Permissions</span><br><span class="line">0e05e4d370c1b000                        cVIR8Lcr9pT-q2awgFkoFYqTTTxUBKFI8rY3R7jvK7kOwI5KHTJRpKrCSjKX8XES-npy-6lR3hDPIB3VibM9AA==        test           0e05e4c75b01b000</span><br></pre></td></tr></table></figure>
+<p>这里可以拿到 InfluxDB 的 token。为了方便后续请求，我们将该 token export 到环境变量里：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export INFLUX2_TOKEN=&quot;cVIR8Lcr9pT-q2awgFkoFYqTTTxUBKFI8rY3R7jvK7kOwI5KHTJRpKrCSjKX8XES-npy-6lR3hDPIB3VibM9AA==&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="导入数据"><a href="#导入数据" class="headerlink" title="导入数据"></a>导入数据</h2><h3 id="influxdb导入"><a href="#influxdb导入" class="headerlink" title="influxdb导入"></a>influxdb导入</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">./bin/tsbs_load_influx2 \</span><br><span class="line">    --urls=http://192.168.1.112:8086 \</span><br><span class="line">    --file=./bench-data/influx-data.lp \</span><br><span class="line">    --do-create-db=false \</span><br><span class="line">    --org-id=test-org \</span><br><span class="line">    --db-name=test-bucket \</span><br><span class="line">    --batch-size=3000 \</span><br><span class="line">    --workers=8 \</span><br><span class="line">    --auth-token=$INFLUX2_TOKEN</span><br></pre></td></tr></table></figure>
+<p>导入性能<br>1732613214,1833041.28,4.836090E+09,1804509.59,183304.13,4.836090E+08,180450.96<br>Summary:<br>loaded 4838400000 metrics in 2681.264sec with 8 workers (mean rate 1804522.36 metrics&#x2F;sec)<br>loaded 483840000 rows in 2681.264sec with 8 workers (mean rate 180452.24 rows&#x2F;sec)</p>
+<h3 id="greptime导入"><a href="#greptime导入" class="headerlink" title="greptime导入"></a>greptime导入</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">./bin/tsbs_load_greptime \</span><br><span class="line">    --urls=http://192.168.1.112:4000 \</span><br><span class="line">    --file=./bench-data/influx-data.lp \</span><br><span class="line">    --batch-size=3000 \</span><br><span class="line">    --gzip=false \</span><br><span class="line">    --workers=6</span><br></pre></td></tr></table></figure>
+<p>tar -zxvf greptime-linux-amd64-centos-v0.11.0-nightly-20241125.tar.gz<br>.&#x2F;greptime-linux-amd64-centos-v0.11.0-nightly-20241125&#x2F;greptime standalone start –data-home &#x2F;root&#x2F;greptimedb&#x2F;data –http-addr 192.168.1.112:4000<br>导入性能<br>1732625414,2649214.76,4.822290E+09,2724457.44,264921.48,4.822290E+08,272445.74<br>Summary:<br>loaded 4838400000 metrics in 1776.165sec with 6 workers (mean rate 2724071.87 metrics&#x2F;sec)<br>loaded 483840000 rows in 1776.165sec with 6 workers (mean rate 272407.19 rows&#x2F;sec)</p>
+<h3 id="IDB导入"><a href="#IDB导入" class="headerlink" title="IDB导入"></a>IDB导入</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">./bin/tsbs_generate_data --use-case=&quot;cpu-only&quot; --seed=123 --scale=4000 --timestamp-start=&quot;2023-06-01T00:00:00Z&quot; --timestamp-end=&quot;2023-06-15T00:00:00Z&quot; --log-interval=&quot;10s&quot; --format=&quot;timescaledb&quot; |gzip &gt; ./bench-data/timescaledb-data.gz</span><br><span class="line"></span><br><span class="line">cat ./bench-data/timescaledb-data.gz | gunzip| ./tsbs_load_timescaledb --host=192.168.1.112 --port=30000 --postgres=&quot;sslmode=disable&quot; --admin-db-name=testdb --db-name=testdb --user=idb --pass=idb --do-create-db=false --workers=6 --batch-size=3000</span><br><span class="line">use</span><br><span class="line">./bin/tsbs_load_timescaledb --host=192.168.1.112 --port=30000 --postgres=&quot;sslmode=disable&quot; --admin-db-name=testdb --db-name=testdb --do-create-db=false --workers=6 --batch-size=3000 --file=./bench-data/influx-data.lp </span><br><span class="line">导入性能</span><br><span class="line"></span><br><span class="line">1732701590,4826563.45,4.807590E+09,4713318.83,482656.35,4.807590E+08,471331.88</span><br><span class="line"></span><br><span class="line">Summary:</span><br><span class="line">loaded 4838400000 metrics in 1027.162sec with 6 workers (mean rate 4710452.39 metrics/sec)</span><br><span class="line">loaded 483840000 rows in 1027.162sec with 6 workers (mean rate 471045.24 rows/sec)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h2><p>在 tsbs 目录下，执行查询</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">//influxdb</span><br><span class="line">./bin/tsbs_run_queries_influx --file=./bench-data/influx-queries-cpu-max-all-1.dat          --db-name=test-bucket   --is-v2=true  --auth-token=$INFLUX2_TOKEN   --urls=&quot;http://192.168.1.112:8086&quot;</span><br><span class="line"></span><br><span class="line">//greptimedb</span><br><span class="line">./bin/tsbs_run_queries_influx --file=./bench-data/greptime-queries-cpu-max-all-1.dat          --db-name=benchmark   --urls=&quot;http://192.168.1.112:4000&quot;</span><br><span class="line">//idb</span><br><span class="line">./bin/tsbs_run_queries_timescaledb --file=./bench-data/timescaledb-queries-cpu-max-all-1.dat --hosts=192.168.1.112 --port=30000 --user=idb --pass=idb --db-name=testdb --postgres=&#x27;sslmode=disable&#x27;</span><br><span class="line">idb config配置：</span><br><span class="line">max_connections = 100</span><br><span class="line">max_prepared_transactions = 100</span><br><span class="line">shared_buffers = 3GB</span><br><span class="line">max_wal_size = 16GB</span><br><span class="line">min_wal_size = 1GB</span><br><span class="line">effective_cache_size = 3GB</span><br><span class="line">temp_buffers = 256MB</span><br><span class="line">work_mem = 2GB</span><br><span class="line">maintenance_work_mem = 2GB</span><br><span class="line">max_worker_processes = 8</span><br><span class="line">max_parallel_maintenance_workers = 4</span><br><span class="line">max_parallel_workers_per_gather = 4</span><br><span class="line">max_parallel_workers = 8</span><br><span class="line">synchronous_commit = off</span><br><span class="line">archive_mode = off</span><br><span class="line">wal_level = minimal</span><br><span class="line">max_wal_senders = 0</span><br><span class="line">shared_preload_libraries = &#x27;timedb&#x27;</span><br><span class="line">idb压缩设置</span><br><span class="line">ALTER TABLE cpu SET (</span><br><span class="line">  timedb.compress,</span><br><span class="line">  timedb.compress_segmentby = &#x27;time&#x27;</span><br><span class="line">);</span><br><span class="line">SELECT add_compression_policy(&#x27;cpu&#x27;, INTERVAL &#x27;1 days&#x27;);</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>查询类型</th>
+<th>查询执行次数</th>
+<th>InfluxDB平均耗时(毫秒)</th>
+<th>GreptimeDB平均耗时(毫秒)</th>
+<th>IDB平均耗时(毫秒)</th>
+<th>IDB压缩后平均耗时(毫秒)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>cpu-max-all-1</td>
+<td>100</td>
+<td>8.06</td>
+<td>25.45</td>
+<td>8.84</td>
+<td>967.31</td>
+</tr>
+<tr>
+<td>cpu-max-all-8</td>
+<td>100</td>
+<td>8.92</td>
+<td>36.71</td>
+<td>100.90</td>
+<td>1013.84</td>
+</tr>
+<tr>
+<td>double-groupby-1</td>
+<td>50</td>
+<td>1646.83</td>
+<td>818.93</td>
+<td>2427.36</td>
+<td>1680.42</td>
+</tr>
+<tr>
+<td>double-groupby-5</td>
+<td>50</td>
+<td>6762.59</td>
+<td>1113.97</td>
+<td>2970.54</td>
+<td>2730.16</td>
+</tr>
+<tr>
+<td>double-groupby-all</td>
+<td>50</td>
+<td>12832.77</td>
+<td>1546.60</td>
+<td>3551.83</td>
+<td>3908.27</td>
+</tr>
+<tr>
+<td>groupby-orderby-limit</td>
+<td>50</td>
+<td>25790.39</td>
+<td>13676.30</td>
+<td>30.78</td>
+<td>7799.27</td>
+</tr>
+<tr>
+<td>high-cpu-1</td>
+<td>100</td>
+<td>9.86</td>
+<td>8.24</td>
+<td>25.23</td>
+<td>794.90</td>
+</tr>
+<tr>
+<td>high-cpu-all</td>
+<td>50</td>
+<td>28559.38</td>
+<td>4699.47</td>
+<td>3431.82</td>
+<td>3274.46</td>
+</tr>
+<tr>
+<td>lastpoint</td>
+<td>10</td>
+<td>2995.42</td>
+<td>14348.95</td>
+<td>62.76</td>
+<td>8180.81</td>
+</tr>
+<tr>
+<td>single-groupby-1-1-1</td>
+<td>100</td>
+<td>1.88</td>
+<td>17.31</td>
+<td>2.00</td>
+<td>60.19</td>
+</tr>
+<tr>
+<td>single-groupby-1-1-12</td>
+<td>100</td>
+<td>10.05</td>
+<td>16.83</td>
+<td>26.22</td>
+<td>457.63</td>
+</tr>
+<tr>
+<td>single-groupby-1-8-1</td>
+<td>100</td>
+<td>5.74</td>
+<td>19.61</td>
+<td>8.12</td>
+<td>60.83</td>
+</tr>
+<tr>
+<td>single-groupby-5-1-1</td>
+<td>100</td>
+<td>7.03</td>
+<td>16.36</td>
+<td>2.09</td>
+<td>103.28</td>
+</tr>
+<tr>
+<td>single-groupby-5-1-12</td>
+<td>100</td>
+<td>30.68</td>
+<td>19.45</td>
+<td>27.04</td>
+<td>817.98</td>
+</tr>
+<tr>
+<td>single-groupby-5-8-1</td>
+<td>100</td>
+<td>11.32</td>
+<td>21.66</td>
+<td>8.63</td>
+<td>104.17</td>
+</tr>
+</tbody></table>
+
+        </div>
+    
+<!-- tags -->
+
+    <div class="post-meta">
+        标签：
+        
+            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/"> / 数据库</a>
+        
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2023 Leaout&#39;s Blog</span>
+    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
