@@ -65,15 +65,6 @@
                 <div class="post-list">
     
     <div class="post">
-        <a class="post-title" href="/2024/12/17/pg_deadlock_detect/">pg数据库死锁检测</a>
-        <div class="post-except">
-            概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没
-            <a class="read-more" href="/2024/12/17/pg_deadlock_detect/"> ... </a>
-        </div>
-        <div class="post-date">2024.12.17</div>
-    </div>
-    
-    <div class="post">
         <a class="post-title" href="/2024/12/17/pg_vector/">pgvector 操作手册</a>
         <div class="post-except">
             pg_vector 函数说明Supported distance functions are:
@@ -82,6 +73,15 @@
 &lt;#&gt; - (negative) inner product
 &lt;&#x3D;&gt; - cos
             <a class="read-more" href="/2024/12/17/pg_vector/"> ... </a>
+        </div>
+        <div class="post-date">2024.12.17</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2024/12/17/pg_deadlock_detect/">pg数据库死锁检测</a>
+        <div class="post-except">
+            概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没
+            <a class="read-more" href="/2024/12/17/pg_deadlock_detect/"> ... </a>
         </div>
         <div class="post-date">2024.12.17</div>
     </div>
@@ -111,32 +111,32 @@
     <div class="post">
         <a class="post-title" href="/2024/12/15/centos_upgrade_gcc/">centos7 升级gcc</a>
         <div class="post-except">
-            centos 升级gcc方法112345scl enable devtoolset-7 bashvim /etc/profilesource /opt/rh/devtoolset-7/enable
+            centos 升级gcc方法1scl enable devtoolset-7 bashvim /etc/profilesource /opt/rh/devtoolset-7/enable
 
 方法2源码编译
-GCC源码地址为http://ftp.gnu
+GCC源码地址为http://ftp.gnu.org/
             <a class="read-more" href="/2024/12/15/centos_upgrade_gcc/"> ... </a>
         </div>
         <div class="post-date">2024.12.15</div>
     </div>
     
     <div class="post">
-        <a class="post-title" href="/2024/01/07/hexo/">Hexo &amp; github 构建个人博客</a>
+        <a class="post-title" href="/2024/01/07/archcheck/">如何判断CPU 架构</a>
         <div class="post-except">
-            安装nodejs 环境官网 http://nodejs.p2hp.com/
-使用 npm 一键安装 Hexo 博客程序：1npm install -g hexo-cli
-Hexo 初始化和本地预览初始化并安装所需组件：
-12hexo init      # 初
-            <a class="read-more" href="/2024/01/07/hexo/"> ... </a>
+            C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型c++代码中判断#include&lt;iostream&gt;int main()&#123;#if defined __linux__std::cout&lt;&lt;
+            <a class="read-more" href="/2024/01/07/archcheck/"> ... </a>
         </div>
         <div class="post-date">2024.01.07</div>
     </div>
     
     <div class="post">
-        <a class="post-title" href="/2024/01/07/archcheck/">如何判断CPU 架构</a>
+        <a class="post-title" href="/2024/01/07/hexo/">Hexo &amp; github 构建个人博客</a>
         <div class="post-except">
-            C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型c++代码中判断123456789101112131415161718192021222324252627#include&lt;iostream&gt;int main(
-            <a class="read-more" href="/2024/01/07/archcheck/"> ... </a>
+            安装nodejs 环境官网 http://nodejs.p2hp.com/
+使用 npm 一键安装 Hexo 博客程序：npm install -g hexo-cli
+Hexo 初始化和本地预览初始化并安装所需组件：
+hexo init      # 初始化n
+            <a class="read-more" href="/2024/01/07/hexo/"> ... </a>
         </div>
         <div class="post-date">2024.01.07</div>
     </div>
