@@ -15,10 +15,10 @@
   <meta name="description" content="概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没有严格的限制，在申请锁时也没有严格的查验，因此不可避免的就会产生死锁。pg数据库采用一种全局死锁检测的方法就是，每个进程启动后会启动一个定时">
 <meta property="og:type" content="article">
 <meta property="og:title" content="pg数据库死锁检测">
-<meta property="og:url" content="http://example.com/2024/12/17/pg_deadlock_detect/index.html">
+<meta property="og:url" content="https://leaout.github.io/2024/12/17/pg_deadlock_detect/">
 <meta property="og:site_name" content="Leaout&#39;s Blog">
 <meta property="og:description" content="概念每个事务都在等待集合中的另一事务，由于这个集合是一个有限集合，因此一旦在这个等待的链条上产生了环，就会产生死锁。自旋锁和轻量锁属于系统锁，他们目前没有死锁检测机制，只能靠内核开发人员在开发过程中谨慎的使用锁，避免死锁发生。数据库中的常规锁，对申请锁的顺序没有严格的限制，在申请锁时也没有严格的查验，因此不可避免的就会产生死锁。pg数据库采用一种全局死锁检测的方法就是，每个进程启动后会启动一个定时">
-<meta property="og:locale" content="en_US">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://i-blog.csdnimg.cn/direct/73cd1dcb30c84198adb1055d2eee7588.png#pic_center">
 <meta property="og:image" content="https://i-blog.csdnimg.cn/direct/0e90a10038d94393b5b94a7b1bf460cb.png#pic_center">
 <meta property="og:image" content="https://i-blog.csdnimg.cn/direct/1ca408dca106471fb6968623358dd2a8.png#pic_center">
@@ -42,7 +42,7 @@
 <meta name="twitter:image" content="https://i-blog.csdnimg.cn/direct/73cd1dcb30c84198adb1055d2eee7588.png#pic_center">
   <!-- canonical -->
   
-  <link rel="canonical" href="http://example.com/2024/12/17/pg_deadlock_detect/">
+  <link rel="canonical" href="https://leaout.github.io/2024/12/17/pg_deadlock_detect/">
   
   <!-- Favicon -->
   <link rel="shortcut icon" href="/img/favicon.ico">
