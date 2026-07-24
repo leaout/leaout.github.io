@@ -18,7 +18,7 @@
 <meta property="article:published_time" content="2026-07-23T16:00:00.000Z">
 
 
-<meta property="article:modified_time" content="2026-07-24T03:09:37.777Z">
+<meta property="article:modified_time" content="2026-07-24T08:29:13.352Z">
 
 <meta property="article:author" content="chenliangyu">
 <meta name="twitter:card" content="summary">
@@ -57,14 +57,17 @@
   </div>
   
   <div class="post-md">
-    <h1 id="Curs：一个个人量化投资平台与涨停打板策略实践"><a href="#Curs：一个个人量化投资平台与涨停打板策略实践" class="headerlink" title="Curs：一个个人量化投资平台与涨停打板策略实践"></a>Curs：一个个人量化投资平台与涨停打板策略实践</h1><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>A股市场是一个高度复杂的非线性系统。做量化投资，最难的不是写策略，而是<strong>建立一套完整的数据采集、策略执行、风控管理和绩效回测的基础设施</strong>。市面上虽然有聚宽、米筐等平台，但本地化部署的可控性、自由度以及实时 Tick 级别的数据处理能力，始终是一个门槛。</p>
+    <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>A股市场是一个高度复杂的非线性系统。做量化投资，最难的不是写策略，而是<strong>建立一套完整的数据采集、策略执行、风控管理和绩效回测的基础设施</strong>。市面上虽然有聚宽、米筐等平台，但本地化部署的可控性、自由度以及实时 Tick 级别的数据处理能力，始终是一个门槛。</p>
 <p>这就是 <strong>Curs</strong> 项目的出发点——一个全栈式个人自动化量化投资平台。项目地址：<a target="_blank" rel="noopener" href="https://github.com/leaout/curs">github.com&#x2F;leaout&#x2F;curs</a></p>
+<p>Curs 实现了三套涨停打板策略，从多层过滤到挂单量衰减检测再到 T+1 智能卖出，配合 SVM 机器学习模型和自定义股票池管理，形成了一套完整的从数据采集到策略执行到绩效分析的量化交易系统。</p>
+<span id="more"></span>
+
 <h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p>Curs 采用<strong>单进程架构</strong>，Web 服务和交易引擎运行在同一进程中，避免了 IPC 的复杂性和性能损耗：</p>
-<p><code>run.py (单进程) ├── Web 服务 (Flask, 端口 5000) │   ├── 策略管理 (ECharts 可视化) │   ├── 信号查询 │   ├── 股票池管理 │   ├── 持仓监控 │   └── 定时任务配置 └── 交易引擎 (Engine)     ├── 策略管理器 (StrategyManager) — 支持热加载     ├── QMT 账户 (QmtStockAccount) — 实盘通道     │   └── 东方财富交易接口     ├── 优化行情引擎 (OptimizedQuoteEngine)     └── 事件调度器 (EventsScheduler)         ├── 数据采集 (东财热点/同花顺)         ├── 定时任务 (Cron/Interval)         └── 盘后处理 (盈利统计/数据导入)</code></p>
+<p><code>	ext run.py (单进程) ├── Web 服务 (Flask, 端口 5000) │   ├── 策略管理 (ECharts 可视化) │   ├── 信号查询 │   ├── 股票池管理 │   ├── 持仓监控 │   └── 定时任务配置 └── 交易引擎 (Engine)     ├── 策略管理器 (StrategyManager) — 支持热加载     ├── QMT 账户 (QmtStockAccount) — 实盘通道     ├── 优化行情引擎 (OptimizedQuoteEngine)     └── 事件调度器 (EventsScheduler)         ├── 数据采集 (东财热点/同花顺)         ├── 定时任务 (Cron/Interval)         └── 盘后处理 (盈利统计/数据导入) </code></p>
 <h3 id="关键设计决策"><a href="#关键设计决策" class="headerlink" title="关键设计决策"></a>关键设计决策</h3><p><strong>行情优化</strong>：用 OptimizedQuoteEngine 只订阅热点股票池（200-500只），而非全市场5000+，Tick 级数据处理延迟控制在3秒以内。</p>
 <p><strong>双模式切换</strong>：每个策略可在 Web UI 一键切换「实盘模式」和「信号模式」，信号模式只记录买卖信号到数据库不下单，非常适合策略调试和回测验证。</p>
 <p><strong>多 Broker 支持</strong>：同时支持 QMT 和东方财富交易接口，配置化切换。</p>
-<h2 id="涨停打板策略：三层过滤体系"><a href="#涨停打板策略：三层过滤体系" class="headerlink" title="涨停打板策略：三层过滤体系"></a>涨停打板策略：三层过滤体系</h2><p>涨停打板的核心是<strong>在股票封板瞬间识别有效信号，排除诱多陷阱</strong>。Curs 实现了三套逐步迭代的策略，这里重点分析 limit_up_strategy 和 limit_up_strategy_advanced。</p>
+<h2 id="涨停打板策略：三层过滤体系"><a href="#涨停打板策略：三层过滤体系" class="headerlink" title="涨停打板策略：三层过滤体系"></a>涨停打板策略：三层过滤体系</h2><p>涨停打板的核心是<strong>在股票封板瞬间识别有效信号，排除诱多陷阱</strong>。这里重点分析 limit_up_strategy 和 limit_up_strategy_advanced。</p>
 <h3 id="第一层：粗筛"><a href="#第一层：粗筛" class="headerlink" title="第一层：粗筛"></a>第一层：粗筛</h3><p>策略首先构建了两个核心数据源——昨日涨停股票和热门股票池，并对热点股做了<strong>连续上榜过滤</strong>，只保留至少连续2天在热点榜上的股票，过滤掉一日游的热点。</p>
 <p>&#96;python</p>
 <h1 id="从数据库获取昨日涨停股票（排除追高）"><a href="#从数据库获取昨日涨停股票（排除追高）" class="headerlink" title="从数据库获取昨日涨停股票（排除追高）"></a>从数据库获取昨日涨停股票（排除追高）</h1><p>yesterday &#x3D; (datetime.now() - timedelta(days&#x3D;1)).strftime(‘%Y-%m-%d’)<br>zt_stocks &#x3D; db_manager.get_zt_stocks_by_date(yesterday)<br>context.pre_limit_up_stocks &#x3D; set(zt_stocks)</p>

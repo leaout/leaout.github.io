@@ -1,102 +1,1006 @@
 <!DOCTYPE html>
 <html>
-    <head>
+<head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
-  <meta name="robots" content="index, follow">
-  <!-- title -->
-  
-    
-  <title>pgvector 操作手册 - Leaout&#39;s Blog</title>
-    
-  
-  
-  <!-- open graph -->
-  <meta name="description" content="pg_vector 函数说明Supported distance functions are:  &lt;-&gt; - L2 distance &lt;#&gt; - (negative) inner product &lt;&#x3D;&gt; - cosine distance &lt;+&gt; - L1 distance (added in 0.7.0) &lt;~&gt; - Hamm">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+<meta name="robots" content="index, follow">
+<title>pgvector 操作手册 - Leaout&#39;s Blog</title>
 <meta property="og:type" content="article">
 <meta property="og:title" content="pgvector 操作手册">
 <meta property="og:url" content="https://leaout.github.io/2024/12/17/pg_vector/">
 <meta property="og:site_name" content="Leaout&#39;s Blog">
-<meta property="og:description" content="pg_vector 函数说明Supported distance functions are:  &lt;-&gt; - L2 distance &lt;#&gt; - (negative) inner product &lt;&#x3D;&gt; - cosine distance &lt;+&gt; - L1 distance (added in 0.7.0) &lt;~&gt; - Hamm">
+
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2024-12-16T16:00:00.000Z">
-<meta property="article:modified_time" content="2024-12-17T02:46:12.872Z">
-<meta property="article:author" content="chenliangyu">
+
 <meta property="article:tag" content="数据库">
+
+
+<meta property="article:published_time" content="2024-12-16T16:00:00.000Z">
+
+
+<meta property="article:modified_time" content="2026-07-22T08:19:43.590Z">
+
+<meta property="article:author" content="chenliangyu">
 <meta name="twitter:card" content="summary">
-  <!-- canonical -->
-  
-  <link rel="canonical" href="https://leaout.github.io/2024/12/17/pg_vector/">
-  
-  <!-- Favicon -->
-  <link rel="shortcut icon" href="/img/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
-  <!-- CSS -->
-  
+<link rel="canonical" href="https://leaout.github.io/2024/12/17/pg_vector/">
+<link rel="shortcut icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 <link rel="stylesheet" href="/css/reset.css">
-
-  
 <link rel="stylesheet" href="/css/style.css">
-
-  
 <link rel="stylesheet" href="/css/markdown.css">
-
-  
 <link rel="stylesheet" href="/css/fonts.css">
 
-<meta name="generator" content="Hexo 7.0.0"></head>
-
-    <body>
-        <div class="paper">
-            <div class="paper-main">
-                
-                    <div class="post-header">
-    <a class="logo" href="/">Leaout&#39;s Blog</a>
-    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
-        <ul class="nav">
-            
-            <li><a href="/">Home</a></li>
-            
-            <li><a href="/about/">About</a></li>
-            
-            <li><a href="/archives">Archives</a></li>
-            
-        </ul>
-
-
-    </a>
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <div class="paper">
+    <div class="paper-main">
+      <div class="post-header">
+  <a class="logo" href="/">Leaout&#39;s Blog</a>
+  <ul class="nav">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about/">About</a></li>
+    <li><a href="/archives">Archives</a></li>
+  </ul>
 </div>
 
-                
-                <div class="post-main">
+      <div class="post-main">
+  <div class="post-main-title">pgvector 操作手册</div>
+  <div class="post-meta">
+    2024-12-17
     
-        <div class="post-main-title">
-            pgvector 操作手册
-        </div>
-        <div class="post-meta">
-            2024-12-17 ｜ 
-            
-        </div>
-        <!-- 圆角分类 -->
-        <!-- <div class="tags"> -->
-            <!--  -->
-        <!-- </div> -->
-        <div class="post-md">
-            <h2 id="pg-vector-函数说明"><a href="#pg-vector-函数说明" class="headerlink" title="pg_vector 函数说明"></a>pg_vector 函数说明</h2><p>Supported distance functions are:</p>
+    ~ 2026-07-22
+    
+  </div>
+  
+  <div class="tags">
+    
+      <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+    
+  </div>
+  
+  <div class="post-md">
+    <h1 id="pgvector-操作手册"><a href="#pgvector-操作手册" class="headerlink" title="pgvector 操作手册"></a>pgvector 操作手册</h1><h2 id="pgvector-函数说明"><a href="#pgvector-函数说明" class="headerlink" title="pgvector 函数说明"></a>pgvector 函数说明</h2><p>Supported distance functions:</p>
+<table>
+<thead>
+<tr>
+<th>运算符</th>
+<th>距离函数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&lt;-&gt;</code></td>
+<td>L2 distance</td>
+</tr>
+<tr>
+<td><code>&lt;#&gt;</code></td>
+<td>(negative) inner product</td>
+</tr>
+<tr>
+<td><code>&lt;=&gt;</code></td>
+<td>cosine distance</td>
+</tr>
+<tr>
+<td><code>&lt;+&gt;</code></td>
+<td>L1 distance (added in 0.7.0)</td>
+</tr>
+<tr>
+<td><code>&lt;~&gt;</code></td>
+<td>Hamming distance (binary vectors, added in 0.7.0)</td>
+</tr>
+<tr>
+<td><code>&lt;%&gt;</code></td>
+<td>Jaccard distance (binary vectors, added in 0.7.0)</td>
+</tr>
+</tbody></table>
+<h3 id="查询示例"><a href="#查询示例" class="headerlink" title="查询示例"></a>查询示例</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> items <span class="keyword">ORDER</span> <span class="keyword">BY</span> embedding <span class="operator">&lt;</span><span class="operator">-</span><span class="operator">&gt;</span> <span class="string">&#x27;[3,1,2]&#x27;</span> LIMIT <span class="number">5</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> items <span class="keyword">WHERE</span> id <span class="operator">!=</span> <span class="number">1</span></span><br><span class="line">  <span class="keyword">ORDER</span> <span class="keyword">BY</span> embedding <span class="operator">&lt;</span><span class="operator">-</span><span class="operator">&gt;</span> (<span class="keyword">SELECT</span> embedding <span class="keyword">FROM</span> items <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">1</span>)</span><br><span class="line">  LIMIT <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="距离计算"><a href="#距离计算" class="headerlink" title="距离计算"></a>距离计算</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- L2 distance</span></span><br><span class="line"><span class="keyword">SELECT</span> embedding <span class="operator">&lt;</span><span class="operator">-</span><span class="operator">&gt;</span> <span class="string">&#x27;[3,1,2]&#x27;</span> <span class="keyword">AS</span> distance <span class="keyword">FROM</span> items;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Inner product（&lt;#&gt; 返回负内积，需乘以 -1）</span></span><br><span class="line"><span class="keyword">SELECT</span> (embedding <span class="operator">&lt;</span>#<span class="operator">&gt;</span> <span class="string">&#x27;[3,1,2]&#x27;</span>) <span class="operator">*</span> <span class="number">-1</span> <span class="keyword">AS</span> inner_product <span class="keyword">FROM</span> items;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Cosine similarity（1 - cosine distance）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="number">1</span> <span class="operator">-</span> (embedding <span class="operator">&lt;=&gt;</span> <span class="string">&#x27;[3,1,2]&#x27;</span>) <span class="keyword">AS</span> cosine_similarity <span class="keyword">FROM</span> items;</span><br></pre></td></tr></table></figure>
+
+<h3 id="聚合函数"><a href="#聚合函数" class="headerlink" title="聚合函数"></a>聚合函数</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 平均向量</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">AVG</span>(embedding) <span class="keyword">FROM</span> items;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 按分组平均向量</span></span><br><span class="line"><span class="keyword">SELECT</span> category_id, <span class="built_in">AVG</span>(embedding) <span class="keyword">FROM</span> items <span class="keyword">GROUP</span> <span class="keyword">BY</span> category_id;</span><br></pre></td></tr></table></figure>
+
+<h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="HNSW"><a href="#HNSW" class="headerlink" title="HNSW"></a>HNSW</h3><p>HNSW 索引基于多层图结构，相比 IVFFlat 在查询性能（速度-召回率权衡）上更优，但构建更慢、内存占用更多。无需数据提前训练即可创建索引。</p>
+<h4 id="按距离函数创建索引"><a href="#按距离函数创建索引" class="headerlink" title="按距离函数创建索引"></a>按距离函数创建索引</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- L2 distance</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_l2_ops);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Inner product</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_ip_ops);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Cosine distance</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_cosine_ops);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- L1 distance (added in 0.7.0)</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_l1_ops);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Hamming distance (added in 0.7.0)</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding bit_hamming_ops);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Jaccard distance (added in 0.7.0)</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding bit_jaccard_ops);</span><br></pre></td></tr></table></figure>
+
+<p>支持的数据类型：</p>
 <ul>
-<li>&lt;-&gt; - L2 distance</li>
-<li>&lt;#&gt; - (negative) inner product</li>
-<li>&lt;&#x3D;&gt; - cosine distance</li>
-<li>&lt;+&gt; - L1 distance (added in 0.7.0)</li>
-<li>&lt;~&gt; - Hamming distance (binary vectors, added in 0.7.0)</li>
-<li>&lt;%&gt; - Jaccard distance (binary vectors, added in 0.7.0)<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SELECT * FROM items ORDER BY embedding &lt;-&gt; &#x27;[3,1,2]&#x27; LIMIT 5;</span><br><span class="line">SELECT * FROM items WHERE id != 1 ORDER BY embedding &lt;-&gt; (SELECT embedding FROM items WHERE id = 1) LIMIT 5;</span><br><span class="line">Distances</span><br><span class="line">Get the distance</span><br><span class="line"></span><br><span class="line">SELECT embedding &lt;-&gt; &#x27;[3,1,2]&#x27; AS distance FROM items;</span><br><span class="line">For inner product, multiply by -1 (since &lt;#&gt; returns the negative inner product)</span><br><span class="line"></span><br><span class="line">SELECT (embedding &lt;#&gt; &#x27;[3,1,2]&#x27;) * -1 AS inner_product FROM items;</span><br><span class="line">For cosine similarity, use 1 - cosine distance</span><br><span class="line"></span><br><span class="line">SELECT 1 - (embedding &lt;=&gt; &#x27;[3,1,2]&#x27;) AS cosine_similarity FROM items;</span><br><span class="line"></span><br><span class="line">Aggregates</span><br><span class="line">Average vectors</span><br><span class="line"></span><br><span class="line">SELECT AVG(embedding) FROM items;</span><br><span class="line">Average groups of vectors</span><br><span class="line"></span><br><span class="line">SELECT category_id, AVG(embedding) FROM items GROUP BY category_id;</span><br></pre></td></tr></table></figure></li>
+<li><code>vector</code> — 最多 2,000 维</li>
+<li><code>halfvec</code> — 最多 4,000 维（0.7.0 新增）</li>
+<li><code>bit</code> — 最多 64,000 维（0.7.0 新增）</li>
+<li><code>sparsevec</code> — 最多 1,000 个非零元素（0.7.0 新增）</li>
 </ul>
-<h2 id="index"><a href="#index" class="headerlink" title="index"></a>index</h2><h3 id="HNSW"><a href="#HNSW" class="headerlink" title="HNSW"></a>HNSW</h3><p>An HNSW index creates a multilayer graph. It has better query performance than IVFFlat (in terms of speed-recall tradeoff), but has slower build times and uses more memory. Also, an index can be created without any data in the table since there isn’t a training step like IVFFlat.</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Add an index for each distance function you want to use.</span><br><span class="line"></span><br><span class="line">L2 distance</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l2_ops);</span><br><span class="line"></span><br><span class="line">Note: Use halfvec_l2_ops for halfvec and sparsevec_l2_ops for sparsevec (and similar with the other distance functions)</span><br><span class="line"></span><br><span class="line">Inner product</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_ip_ops);</span><br><span class="line">Cosine distance</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_cosine_ops);</span><br><span class="line">L1 distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l1_ops);</span><br><span class="line">Hamming distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding bit_hamming_ops);</span><br><span class="line">Jaccard distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding bit_jaccard_ops);</span><br><span class="line">Supported types are:</span><br><span class="line"></span><br><span class="line">vector - up to 2,000 dimensions</span><br><span class="line">halfvec - up to 4,000 dimensions (added in 0.7.0)</span><br><span class="line">bit - up to 64,000 dimensions (added in 0.7.0)</span><br><span class="line">sparsevec - up to 1,000 non-zero elements (added in 0.7.0)</span><br><span class="line"></span><br><span class="line">Index Options</span><br><span class="line">Specify HNSW parameters</span><br><span class="line"></span><br><span class="line">m - the max number of connections per layer (16 by default)</span><br><span class="line">ef_construction - the size of the dynamic candidate list for constructing the graph (64 by default)</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l2_ops) WITH (m = 16, ef_construction = 64);</span><br><span class="line">A higher value of ef_construction provides better recall at the cost of index build time / insert speed.</span><br><span class="line"></span><br><span class="line">Query Options</span><br><span class="line">Specify the size of the dynamic candidate list for search (40 by default)</span><br><span class="line"></span><br><span class="line">SET hnsw.ef_search = 100;</span><br><span class="line">A higher value provides better recall at the cost of speed.</span><br><span class="line"></span><br><span class="line">Use SET LOCAL inside a transaction to set it for a single query</span><br><span class="line"></span><br><span class="line">BEGIN;</span><br><span class="line">SET LOCAL hnsw.ef_search = 100;</span><br><span class="line">SELECT ...</span><br><span class="line">COMMIT;</span><br><span class="line">Index Build Time</span><br><span class="line">Indexes build significantly faster when the graph fits into maintenance_work_mem</span><br><span class="line"></span><br><span class="line">SET maintenance_work_mem = &#x27;8GB&#x27;;</span><br><span class="line">A notice is shown when the graph no longer fits</span><br><span class="line"></span><br><span class="line">NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 100000 tuples</span><br><span class="line">DETAIL:  Building will take significantly more time.</span><br><span class="line">HINT:  Increase maintenance_work_mem to speed up builds.</span><br><span class="line">Note: Do not set maintenance_work_mem so high that it exhausts the memory on the server</span><br><span class="line"></span><br><span class="line">Like other index types, it’s faster to create an index after loading your initial data</span><br><span class="line"></span><br><span class="line">Starting with 0.6.0, you can also speed up index creation by increasing the number of parallel workers (2 by default)</span><br><span class="line"></span><br><span class="line">SET max_parallel_maintenance_workers = 7; -- plus leader</span><br><span class="line">For a large number of workers, you may also need to increase max_parallel_workers (8 by default)</span><br></pre></td></tr></table></figure>
+<h4 id="索引参数"><a href="#索引参数" class="headerlink" title="索引参数"></a>索引参数</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_l2_ops)</span><br><span class="line">  <span class="keyword">WITH</span> (m <span class="operator">=</span> <span class="number">16</span>, ef_construction <span class="operator">=</span> <span class="number">64</span>);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>m</code> — 每层最大连接数（默认 16）</li>
+<li><code>ef_construction</code> — 构建时动态候选列表大小（默认 64）</li>
+</ul>
+<h4 id="查询参数"><a href="#查询参数" class="headerlink" title="查询参数"></a>查询参数</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> hnsw.ef_search <span class="operator">=</span> <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 在事务内对单条查询生效</span></span><br><span class="line"><span class="keyword">BEGIN</span>;</span><br><span class="line"><span class="keyword">SET</span> <span class="keyword">LOCAL</span> hnsw.ef_search <span class="operator">=</span> <span class="number">100</span>;</span><br><span class="line"><span class="keyword">SELECT</span> ...</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>hnsw.ef_search</code> 默认 40，值越大召回率越高，但查询越慢。</p>
+<h4 id="构建加速"><a href="#构建加速" class="headerlink" title="构建加速"></a>构建加速</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> maintenance_work_mem <span class="operator">=</span> <span class="string">&#x27;8GB&#x27;</span>;</span><br><span class="line"><span class="keyword">SET</span> max_parallel_maintenance_workers <span class="operator">=</span> <span class="number">7</span>;</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看构建进度"><a href="#查看构建进度" class="headerlink" title="查看构建进度"></a>查看构建进度</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> phase,</span><br><span class="line">  round(<span class="number">100.0</span> <span class="operator">*</span> blocks_done <span class="operator">/</span> <span class="built_in">nullif</span>(blocks_total, <span class="number">0</span>), <span class="number">1</span>) <span class="keyword">AS</span> &quot;%&quot;</span><br><span class="line">  <span class="keyword">FROM</span> pg_stat_progress_create_index;</span><br></pre></td></tr></table></figure>
+
+<p>HNSW 构建阶段：<code>initializing</code> -&gt; <code>loading tuples</code></p>
+<h3 id="IVFFlat"><a href="#IVFFlat" class="headerlink" title="IVFFlat"></a>IVFFlat</h3><p>IVFFlat 将向量划分为列表（lists），然后搜索最接近查询向量的子集。相比 HNSW 构建更快、内存更少，但查询性能较低。</p>
+<p>获得好的召回率的三要素：</p>
+<ol>
+<li>在表中有一定数据后再建索引</li>
+<li>选择合适的 <code>lists</code> 数量（百万行以内建议 <code>rows/1000</code>，超过百万行建议 <code>sqrt(rows)</code>）</li>
+<li>查询时设置合适的 <code>probes</code>（建议 <code>sqrt(lists)</code>）</li>
+</ol>
+<h4 id="按距离函数创建索引-1"><a href="#按距离函数创建索引-1" class="headerlink" title="按距离函数创建索引"></a>按距离函数创建索引</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- L2 distance</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> ivfflat (embedding vector_l2_ops) <span class="keyword">WITH</span> (lists <span class="operator">=</span> <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Inner product</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> ivfflat (embedding vector_ip_ops) <span class="keyword">WITH</span> (lists <span class="operator">=</span> <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Cosine distance</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> ivfflat (embedding vector_cosine_ops) <span class="keyword">WITH</span> (lists <span class="operator">=</span> <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- Hamming distance (added in 0.7.0)</span></span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> ivfflat (embedding bit_hamming_ops) <span class="keyword">WITH</span> (lists <span class="operator">=</span> <span class="number">100</span>);</span><br></pre></td></tr></table></figure>
+
+<h4 id="查询参数-1"><a href="#查询参数-1" class="headerlink" title="查询参数"></a>查询参数</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> ivfflat.probes <span class="operator">=</span> <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">BEGIN</span>;</span><br><span class="line"><span class="keyword">SET</span> <span class="keyword">LOCAL</span> ivfflat.probes <span class="operator">=</span> <span class="number">10</span>;</span><br><span class="line"><span class="keyword">SELECT</span> ...</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>ivfflat.probes</code> 默认 1，值越大召回率越高。设为 <code>lists</code> 数可精确搜索最近邻（但优化器不再使用该索引）。</p>
+<h4 id="查看构建进度-1"><a href="#查看构建进度-1" class="headerlink" title="查看构建进度"></a>查看构建进度</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> phase,</span><br><span class="line">  round(<span class="number">100.0</span> <span class="operator">*</span> tuples_done <span class="operator">/</span> <span class="built_in">nullif</span>(tuples_total, <span class="number">0</span>), <span class="number">1</span>) <span class="keyword">AS</span> &quot;%&quot;</span><br><span class="line">  <span class="keyword">FROM</span> pg_stat_progress_create_index;</span><br></pre></td></tr></table></figure>
+
+<p>IVFFlat 构建阶段：<code>initializing</code> -&gt; <code>performing k-means</code> -&gt; <code>assigning tuples</code> -&gt; <code>loading tuples</code></p>
+<h2 id="Filtering（条件过滤）"><a href="#Filtering（条件过滤）" class="headerlink" title="Filtering（条件过滤）"></a>Filtering（条件过滤）</h2><p>带 WHERE 子句的近似最近邻查询：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> items <span class="keyword">WHERE</span> category_id <span class="operator">=</span> <span class="number">123</span></span><br><span class="line">  <span class="keyword">ORDER</span> <span class="keyword">BY</span> embedding <span class="operator">&lt;</span><span class="operator">-</span><span class="operator">&gt;</span> <span class="string">&#x27;[3,1,2]&#x27;</span> LIMIT <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+
+<p>建议先在被过滤列上创建索引：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items (category_id);</span><br><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items (location_id, category_id);  <span class="comment">-- 多列索引</span></span><br></pre></td></tr></table></figure>
+
+<p>对于低基数的过滤条件，可考虑部分索引：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX <span class="keyword">ON</span> items <span class="keyword">USING</span> hnsw (embedding vector_l2_ops)</span><br><span class="line">  <span class="keyword">WHERE</span> (category_id <span class="operator">=</span> <span class="number">123</span>);</span><br></pre></td></tr></table></figure>
+
+<p>从 0.8.0 开始支持迭代索引扫描：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> hnsw.iterative_scan <span class="operator">=</span> strict_order;</span><br></pre></td></tr></table></figure>
+
+<p>如果过滤值很多，考虑分区表：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE TABLE</span> items (embedding vector(<span class="number">3</span>), category_id <span class="type">int</span>)</span><br><span class="line">  <span class="keyword">PARTITION</span> <span class="keyword">BY</span> LIST(category_id);</span><br></pre></td></tr></table></figure>
+
+<h2 id="pgvector-函数-操作符一览"><a href="#pgvector-函数-操作符一览" class="headerlink" title="pgvector 函数&#x2F;操作符一览"></a>pgvector 函数&#x2F;操作符一览</h2><table>
+<thead>
+<tr>
+<th>架构模式</th>
+<th>名称</th>
+<th>结果数据类型</th>
+<th>参数数据类型</th>
+<th>类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>public</td>
+<td>array_to_halfvec</td>
+<td>halfvec</td>
+<td>double precision[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_halfvec</td>
+<td>halfvec</td>
+<td>integer[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_halfvec</td>
+<td>halfvec</td>
+<td>numeric[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_halfvec</td>
+<td>halfvec</td>
+<td>real[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_sparsevec</td>
+<td>sparsevec</td>
+<td>double precision[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_sparsevec</td>
+<td>sparsevec</td>
+<td>integer[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_sparsevec</td>
+<td>sparsevec</td>
+<td>numeric[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_sparsevec</td>
+<td>sparsevec</td>
+<td>real[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_vector</td>
+<td>vector</td>
+<td>double precision[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_vector</td>
+<td>vector</td>
+<td>integer[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_vector</td>
+<td>vector</td>
+<td>numeric[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>array_to_vector</td>
+<td>vector</td>
+<td>real[], integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>avg</td>
+<td>halfvec</td>
+<td>halfvec</td>
+<td>agg</td>
+</tr>
+<tr>
+<td>public</td>
+<td>avg</td>
+<td>vector</td>
+<td>vector</td>
+<td>agg</td>
+</tr>
+<tr>
+<td>public</td>
+<td>binary_quantize</td>
+<td>bit</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>binary_quantize</td>
+<td>bit</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>cosine_distance</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>cosine_distance</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>cosine_distance</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec</td>
+<td>halfvec</td>
+<td>halfvec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_accum</td>
+<td>double precision[]</td>
+<td>double precision[], halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_add</td>
+<td>halfvec</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_avg</td>
+<td>halfvec</td>
+<td>double precision[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_cmp</td>
+<td>integer</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_combine</td>
+<td>double precision[]</td>
+<td>double precision[], double precision[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_concat</td>
+<td>halfvec</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_eq</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_ge</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_gt</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_in</td>
+<td>halfvec</td>
+<td>cstring, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_l2_squared_distance</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_le</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_lt</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_mul</td>
+<td>halfvec</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_ne</td>
+<td>boolean</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_negative_inner_product</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_out</td>
+<td>cstring</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_recv</td>
+<td>halfvec</td>
+<td>internal, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_send</td>
+<td>bytea</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_spherical_distance</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_sub</td>
+<td>halfvec</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_to_float4</td>
+<td>real[]</td>
+<td>halfvec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_to_sparsevec</td>
+<td>sparsevec</td>
+<td>halfvec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_to_vector</td>
+<td>vector</td>
+<td>halfvec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>halfvec_typmod_in</td>
+<td>integer</td>
+<td>cstring[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>hamming_distance</td>
+<td>double precision</td>
+<td>bit, bit</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>hnsw_bit_support</td>
+<td>internal</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>hnsw_halfvec_support</td>
+<td>internal</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>hnsw_sparsevec_support</td>
+<td>internal</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>hnswhandler</td>
+<td>index_am_handler</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>inner_product</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>inner_product</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>inner_product</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>ivfflat_bit_support</td>
+<td>internal</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>ivfflat_halfvec_support</td>
+<td>internal</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>ivfflathandler</td>
+<td>index_am_handler</td>
+<td>internal</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>jaccard_distance</td>
+<td>double precision</td>
+<td>bit, bit</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l1_distance</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l1_distance</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l1_distance</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_distance</td>
+<td>double precision</td>
+<td>halfvec, halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_distance</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_distance</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_norm</td>
+<td>double precision</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_norm</td>
+<td>double precision</td>
+<td>sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_normalize</td>
+<td>halfvec</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_normalize</td>
+<td>sparsevec</td>
+<td>sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>l2_normalize</td>
+<td>vector</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec</td>
+<td>sparsevec</td>
+<td>sparsevec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_cmp</td>
+<td>integer</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_eq</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_ge</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_gt</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_in</td>
+<td>sparsevec</td>
+<td>cstring, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_l2_squared_distance</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_le</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_lt</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_ne</td>
+<td>boolean</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_negative_inner_product</td>
+<td>double precision</td>
+<td>sparsevec, sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_out</td>
+<td>cstring</td>
+<td>sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_recv</td>
+<td>sparsevec</td>
+<td>internal, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_send</td>
+<td>bytea</td>
+<td>sparsevec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_to_halfvec</td>
+<td>halfvec</td>
+<td>sparsevec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_to_vector</td>
+<td>vector</td>
+<td>sparsevec, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sparsevec_typmod_in</td>
+<td>integer</td>
+<td>cstring[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>subvector</td>
+<td>halfvec</td>
+<td>halfvec, integer, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>subvector</td>
+<td>vector</td>
+<td>vector, integer, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sum</td>
+<td>halfvec</td>
+<td>halfvec</td>
+<td>agg</td>
+</tr>
+<tr>
+<td>public</td>
+<td>sum</td>
+<td>vector</td>
+<td>vector</td>
+<td>agg</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector</td>
+<td>vector</td>
+<td>vector, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_accum</td>
+<td>double precision[]</td>
+<td>double precision[], vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_add</td>
+<td>vector</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_avg</td>
+<td>vector</td>
+<td>double precision[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_cmp</td>
+<td>integer</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_combine</td>
+<td>double precision[]</td>
+<td>double precision[], double precision[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_concat</td>
+<td>vector</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_dims</td>
+<td>integer</td>
+<td>halfvec</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_dims</td>
+<td>integer</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_eq</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_ge</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_gt</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_in</td>
+<td>vector</td>
+<td>cstring, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_l2_squared_distance</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_le</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_lt</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_mul</td>
+<td>vector</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_ne</td>
+<td>boolean</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_negative_inner_product</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_norm</td>
+<td>double precision</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_out</td>
+<td>cstring</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_recv</td>
+<td>vector</td>
+<td>internal, oid, integer</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_send</td>
+<td>bytea</td>
+<td>vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_spherical_distance</td>
+<td>double precision</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_sub</td>
+<td>vector</td>
+<td>vector, vector</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_to_float4</td>
+<td>real[]</td>
+<td>vector, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_to_halfvec</td>
+<td>halfvec</td>
+<td>vector, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_to_sparsevec</td>
+<td>sparsevec</td>
+<td>vector, integer, boolean</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>public</td>
+<td>vector_typmod_in</td>
+<td>integer</td>
+<td>cstring[]</td>
+<td>函数</td>
+</tr>
+<tr>
+<td>An HNSW index creates a multilayer graph. It has better query performance than IVFFlat (in terms of speed-recall tradeoff), but has slower build times and uses more memory. Also, an index can be created without any data in the table since there isn’t a training step like IVFFlat.</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">Add an index for each distance function you want to use.</span><br><span class="line"></span><br><span class="line">L2 distance</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l2_ops);</span><br><span class="line"></span><br><span class="line">Note: Use halfvec_l2_ops for halfvec and sparsevec_l2_ops for sparsevec (and similar with the other distance functions)</span><br><span class="line"></span><br><span class="line">Inner product</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_ip_ops);</span><br><span class="line">Cosine distance</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_cosine_ops);</span><br><span class="line">L1 distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l1_ops);</span><br><span class="line">Hamming distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding bit_hamming_ops);</span><br><span class="line">Jaccard distance - added in 0.7.0</span><br><span class="line"></span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding bit_jaccard_ops);</span><br><span class="line">Supported types are:</span><br><span class="line"></span><br><span class="line">vector - up to 2,000 dimensions</span><br><span class="line">halfvec - up to 4,000 dimensions (added in 0.7.0)</span><br><span class="line">bit - up to 64,000 dimensions (added in 0.7.0)</span><br><span class="line">sparsevec - up to 1,000 non-zero elements (added in 0.7.0)</span><br><span class="line"></span><br><span class="line">Index Options</span><br><span class="line">Specify HNSW parameters</span><br><span class="line"></span><br><span class="line">m - the max number of connections per layer (16 by default)</span><br><span class="line">ef_construction - the size of the dynamic candidate list for constructing the graph (64 by default)</span><br><span class="line">CREATE INDEX ON items USING hnsw (embedding vector_l2_ops) WITH (m = 16, ef_construction = 64);</span><br><span class="line">A higher value of ef_construction provides better recall at the cost of index build time / insert speed.</span><br><span class="line"></span><br><span class="line">Query Options</span><br><span class="line">Specify the size of the dynamic candidate list for search (40 by default)</span><br><span class="line"></span><br><span class="line">SET hnsw.ef_search = 100;</span><br><span class="line">A higher value provides better recall at the cost of speed.</span><br><span class="line"></span><br><span class="line">Use SET LOCAL inside a transaction to set it for a single query</span><br><span class="line"></span><br><span class="line">BEGIN;</span><br><span class="line">SET LOCAL hnsw.ef_search = 100;</span><br><span class="line">SELECT ...</span><br><span class="line">COMMIT;</span><br><span class="line">Index Build Time</span><br><span class="line">Indexes build significantly faster when the graph fits into maintenance_work_mem</span><br><span class="line"></span><br><span class="line">SET maintenance_work_mem = &#x27;8GB&#x27;;</span><br><span class="line">A notice is shown when the graph no longer fits</span><br><span class="line"></span><br><span class="line">NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 100000 tuples</span><br><span class="line">DETAIL:  Building will take significantly more time.</span><br><span class="line">HINT:  Increase maintenance_work_mem to speed up builds.</span><br><span class="line">Note: Do not set maintenance_work_mem so high that it exhausts the memory on the server</span><br><span class="line"></span><br><span class="line">Like other index types, it’s faster to create an index after loading your initial data</span><br><span class="line"></span><br><span class="line">Starting with 0.6.0, you can also speed up index creation by increasing the number of parallel workers (2 by default)</span><br><span class="line"></span><br><span class="line">SET max_parallel_maintenance_workers = 7; -- plus leader</span><br><span class="line">For a large number of workers, you may also need to increase max_parallel_workers (8 by default)</span><br></pre></td></tr></table></figure>
 
 <h4 id="Indexing-Progress"><a href="#Indexing-Progress" class="headerlink" title="Indexing Progress"></a>Indexing Progress</h4><p>SELECT phase, round(100.0 * blocks_done &#x2F; nullif(blocks_total, 0), 1) AS “%” FROM pg_stat_progress_create_index;<br>The phases for HNSW are:</p>
 <p>initializing<br>loading tuples</p>
-<h2 id="IVFFlat"><a href="#IVFFlat" class="headerlink" title="IVFFlat"></a>IVFFlat</h2><p>An IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector. It has faster build times and uses less memory than HNSW, but has lower query performance (in terms of speed-recall tradeoff).</p>
+<h2 id="IVFFlat-1"><a href="#IVFFlat-1" class="headerlink" title="IVFFlat"></a>IVFFlat</h2><p>An IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector. It has faster build times and uses less memory than HNSW, but has lower query performance (in terms of speed-recall tradeoff).</p>
 <p>Three keys to achieving good recall are:</p>
 <p>Create the index after the table has some data<br>Choose an appropriate number of lists - a good place to start is rows &#x2F; 1000 for up to 1M rows and sqrt(rows) for over 1M rows<br>When querying, specify an appropriate number of probes (higher is better for recall, lower is better for speed) - a good place to start is sqrt(lists)<br>Add an index for each distance function you want to use.</p>
 <p>L2 distance</p>
@@ -960,37 +1864,22 @@
 </tr>
 </tbody></table>
 
-        </div>
-    
-<!-- tags -->
+  </div>
+</div>
 
-    <div class="post-meta">
-        标签：
-        
-            <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/"> / 数据库</a>
-        
+      <div class="footer">
+  <span>Copyright © 2023 Leaout&#39;s Blog</span>
+  <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https://imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+      <link rel="stylesheet" href="/css/a11y-dark.min.css">
+      <script src="/js/highlight.min.js"></script>
+      <script src="/js/highlightjs-line-numbers.js"></script>
+      <script>
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
+      </script>
     </div>
-
-</div>
-                <div class="footer">
-    <span>Copyright © 2023 Leaout&#39;s Blog</span>
-    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
-</div>
-
-<link rel="stylesheet" href="/css/a11y-dark.min.css">
-
-
-<script src="/js/highlight.min.js"></script>
-
-
-<script src="/js/highlightjs-line-numbers.js"></script>
-
-<script>
-    hljs.initHighlightingOnLoad();
-    hljs.initLineNumbersOnLoad();
-</script>
-
-            </div>
-        </div>
-    </body>
+  </div>
+</body>
 </html>

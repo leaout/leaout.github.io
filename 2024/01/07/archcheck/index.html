@@ -1,142 +1,160 @@
 <!DOCTYPE html>
 <html>
-    <head>
+<head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
-  <meta name="robots" content="index, follow">
-  <!-- title -->
-  
-    
-  <title>如何判断CPU 架构 - Leaout&#39;s Blog</title>
-    
-  
-  
-  <!-- open graph -->
-  <meta name="description" content="C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型c++代码中判断#include&lt;iostream&gt;int main()&#123;#if defined __linux__std::cout&lt;&lt;&quot;linux system&quot;&lt;&lt;std::endl;#elif defined __ANDROID__std">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+<meta name="robots" content="index, follow">
+<title>如何判断CPU 架构 - Leaout&#39;s Blog</title>
 <meta property="og:type" content="article">
 <meta property="og:title" content="如何判断CPU 架构">
 <meta property="og:url" content="https://leaout.github.io/2024/01/07/archcheck/">
 <meta property="og:site_name" content="Leaout&#39;s Blog">
-<meta property="og:description" content="C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型c++代码中判断#include&lt;iostream&gt;int main()&#123;#if defined __linux__std::cout&lt;&lt;&quot;linux system&quot;&lt;&lt;std::endl;#elif defined __ANDROID__std">
+
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2024-01-06T16:00:00.000Z">
-<meta property="article:modified_time" content="2024-12-17T02:42:46.641Z">
-<meta property="article:author" content="chenliangyu">
+
 <meta property="article:tag" content="C++">
+
+
+<meta property="article:published_time" content="2024-01-06T16:00:00.000Z">
+
+
+<meta property="article:modified_time" content="2026-07-22T08:19:43.449Z">
+
+<meta property="article:author" content="chenliangyu">
 <meta name="twitter:card" content="summary">
-  <!-- canonical -->
-  
-  <link rel="canonical" href="https://leaout.github.io/2024/01/07/archcheck/">
-  
-  <!-- Favicon -->
-  <link rel="shortcut icon" href="/img/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
-  <!-- CSS -->
-  
+<link rel="canonical" href="https://leaout.github.io/2024/01/07/archcheck/">
+<link rel="shortcut icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 <link rel="stylesheet" href="/css/reset.css">
-
-  
 <link rel="stylesheet" href="/css/style.css">
-
-  
 <link rel="stylesheet" href="/css/markdown.css">
-
-  
 <link rel="stylesheet" href="/css/fonts.css">
 
-<meta name="generator" content="Hexo 7.0.0"></head>
-
-    <body>
-        <div class="paper">
-            <div class="paper-main">
-                
-                    <div class="post-header">
-    <a class="logo" href="/">Leaout&#39;s Blog</a>
-    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
-        <ul class="nav">
-            
-            <li><a href="/">Home</a></li>
-            
-            <li><a href="/about/">About</a></li>
-            
-            <li><a href="/archives">Archives</a></li>
-            
-        </ul>
-
-
-    </a>
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <div class="paper">
+    <div class="paper-main">
+      <div class="post-header">
+  <a class="logo" href="/">Leaout&#39;s Blog</a>
+  <ul class="nav">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about/">About</a></li>
+    <li><a href="/archives">Archives</a></li>
+  </ul>
 </div>
 
-                
-                <div class="post-main">
+      <div class="post-main">
+  <div class="post-main-title">如何判断CPU 架构</div>
+  <div class="post-meta">
+    2024-01-07
     
-        <div class="post-main-title">
-            如何判断CPU 架构
-        </div>
-        <div class="post-meta">
-            2024-01-07 ｜ 
-            
-        </div>
-        <!-- 圆角分类 -->
-        <!-- <div class="tags"> -->
-            <!--  -->
-        <!-- </div> -->
-        <div class="post-md">
-            <h1 id="C-代码中判断CPU-架构，操作系统类型，cmake-中判断CPU-架构，操作系统类型"><a href="#C-代码中判断CPU-架构，操作系统类型，cmake-中判断CPU-架构，操作系统类型" class="headerlink" title="C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型"></a>C++代码中判断CPU 架构，操作系统类型，cmake 中判断CPU 架构，操作系统类型</h1><h2 id="c-代码中判断"><a href="#c-代码中判断" class="headerlink" title="c++代码中判断"></a>c++代码中判断</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#include&lt;iostream&gt;</span><br><span class="line"></span><br><span class="line">int main()&#123;</span><br><span class="line"></span><br><span class="line">#if defined __linux__</span><br><span class="line"></span><br><span class="line">std::cout&lt;&lt;&quot;linux system&quot;&lt;&lt;std::endl;</span><br><span class="line"></span><br><span class="line">#elif defined __ANDROID__</span><br><span class="line"></span><br><span class="line">std::cout&lt;&lt;&quot;android system&quot;&lt;&lt;std::endl;</span><br><span class="line"></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#if defined __aarch64__</span><br><span class="line"></span><br><span class="line">std::cout&lt;&lt;&quot;this is arm cpu&quot;&lt;&lt;std::endl;</span><br><span class="line"></span><br><span class="line">#elif defined __x86_64__</span><br><span class="line"></span><br><span class="line">std::cout&lt;&lt;&quot;this id x86 cpu&quot;&lt;&lt;std::endl;</span><br><span class="line"></span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">return 0;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    ~ 2026-07-22
+    
+  </div>
+  
+  <div class="tags">
+    
+      <a href="/tags/C/">C++</a>
+    
+  </div>
+  
+  <div class="post-md">
+    <h1 id="C-代码中判断-CPU-架构、操作系统类型，CMake-中判断-CPU-架构、操作系统类型"><a href="#C-代码中判断-CPU-架构、操作系统类型，CMake-中判断-CPU-架构、操作系统类型" class="headerlink" title="C++ 代码中判断 CPU 架构、操作系统类型，CMake 中判断 CPU 架构、操作系统类型"></a>C++ 代码中判断 CPU 架构、操作系统类型，CMake 中判断 CPU 架构、操作系统类型</h1><h2 id="C-代码中判断"><a href="#C-代码中判断" class="headerlink" title="C++ 代码中判断"></a>C++ 代码中判断</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">if</span> defined __linux__</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;linux system&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined __ANDROID__</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;android system&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> defined __aarch64__</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;this is arm cpu&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> defined __x86_64__</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;this is x86 cpu&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-
-<h2 id="CMAKE-中判断操作系统类型和-cpu-架构"><a href="#CMAKE-中判断操作系统类型和-cpu-架构" class="headerlink" title="CMAKE 中判断操作系统类型和 cpu 架构"></a>CMAKE 中判断操作系统类型和 cpu 架构</h2><p>需要利用 cmake中的变量来判断。</p>
-<p>CMAKE_HOST_SYSTEM_NAME：操作系统类型</p>
-<p>CMAKE_HOST_SYSTEM_PROCESSOR：cpu 指令集</p>
+<h2 id="CMake-中判断操作系统类型和-CPU-架构"><a href="#CMake-中判断操作系统类型和-CPU-架构" class="headerlink" title="CMake 中判断操作系统类型和 CPU 架构"></a>CMake 中判断操作系统类型和 CPU 架构</h2><p>需要利用 CMake 中的变量来判断：</p>
+<ul>
+<li><code>CMAKE_HOST_SYSTEM_NAME</code>：操作系统类型</li>
+<li><code>CMAKE_HOST_SYSTEM_PROCESSOR</code>：CPU 指令集</li>
+</ul>
 <p>CMakeLists.txt：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cmake_minimum_required(VERSION 3.10.0)</span><br><span class="line"></span><br><span class="line">message($&#123;CMAKE_HOST_SYSTEM_NAME&#125;)</span><br><span class="line"></span><br><span class="line">message($&#123;CMAKE_HOST_SYSTEM_PROCESSOR&#125;)</span><br><span class="line"></span><br><span class="line">if(CMAKE_HOST_SYSTEM_NAME MATCHES &quot;Linux&quot;)</span><br><span class="line"></span><br><span class="line">message(&quot;this is Linux&quot;)</span><br><span class="line"></span><br><span class="line">elseif(CMAKE_HOST_SYSTEM_NAME MATCHES &quot;Android&quot;)</span><br><span class="line"></span><br><span class="line"> message(&quot;this is Android&quot;)</span><br><span class="line"></span><br><span class="line">endif()</span><br><span class="line"></span><br><span class="line">if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES &quot;aarch64&quot;)</span><br><span class="line"></span><br><span class="line">message(&quot;this is aarch64 cpu&quot;)</span><br><span class="line"></span><br><span class="line">elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES &quot;x86_64&quot;)</span><br><span class="line"></span><br><span class="line"> message(&quot;this is x86_64 cpu&quot;)</span><br><span class="line"></span><br><span class="line">endif()</span><br></pre></td></tr></table></figure>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>.<span class="number">0</span>)</span><br><span class="line"><span class="keyword">message</span>(<span class="variable">$&#123;CMAKE_HOST_SYSTEM_NAME&#125;</span>)</span><br><span class="line"><span class="keyword">message</span>(<span class="variable">$&#123;CMAKE_HOST_SYSTEM_PROCESSOR&#125;</span>)</span><br><span class="line"><span class="keyword">if</span>(CMAKE_HOST_SYSTEM_NAME <span class="keyword">MATCHES</span> <span class="string">&quot;Linux&quot;</span>)</span><br><span class="line">    <span class="keyword">message</span>(<span class="string">&quot;this is Linux&quot;</span>)</span><br><span class="line"><span class="keyword">elseif</span>(CMAKE_HOST_SYSTEM_NAME <span class="keyword">MATCHES</span> <span class="string">&quot;Android&quot;</span>)</span><br><span class="line">    <span class="keyword">message</span>(<span class="string">&quot;this is Android&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br><span class="line"><span class="keyword">if</span>(CMAKE_HOST_SYSTEM_PROCESSOR <span class="keyword">MATCHES</span> <span class="string">&quot;aarch64&quot;</span>)</span><br><span class="line">    <span class="keyword">message</span>(<span class="string">&quot;this is aarch64 cpu&quot;</span>)</span><br><span class="line"><span class="keyword">elseif</span>(CMAKE_HOST_SYSTEM_PROCESSOR <span class="keyword">MATCHES</span> <span class="string">&quot;x86_64&quot;</span>)</span><br><span class="line">    <span class="keyword">message</span>(<span class="string">&quot;this is x86_64 cpu&quot;</span>)</span><br><span class="line"><span class="keyword">endif</span>()</span><br></pre></td></tr></table></figure>
 
+<h2 id="常用宏定义"><a href="#常用宏定义" class="headerlink" title="常用宏定义"></a>常用宏定义</h2><h3 id="操作系统预定义宏"><a href="#操作系统预定义宏" class="headerlink" title="操作系统预定义宏"></a>操作系统预定义宏</h3><table>
+<thead>
+<tr>
+<th>操作系统</th>
+<th>公共定义</th>
+<th>64 位系统定义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Windows</td>
+<td><code>_WIN32</code></td>
+<td><code>_WIN64</code></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td><code>__APPLE__</code></td>
+<td><code>__LP64__</code></td>
+</tr>
+<tr>
+<td>Linux</td>
+<td><code>__linux__</code></td>
+<td><code>__LP64__</code></td>
+</tr>
+<tr>
+<td>Android</td>
+<td><code>__ANDROID__</code></td>
+<td><code>__LP64__</code></td>
+</tr>
+</tbody></table>
+<h3 id="编译器预定义宏"><a href="#编译器预定义宏" class="headerlink" title="编译器预定义宏"></a>编译器预定义宏</h3><table>
+<thead>
+<tr>
+<th>编译器</th>
+<th>编译器定义</th>
+<th>x86 指令集</th>
+<th>AMD64 指令集</th>
+<th>ARM32 指令集</th>
+<th>Thumb 指令集</th>
+<th>ARM64 指令集</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MSVC</td>
+<td><code>_MSC_VER</code></td>
+<td><code>_M_IX86</code></td>
+<td><code>_M_X64</code></td>
+<td><code>_M_ARM</code></td>
+<td><code>_M_THUMB</code></td>
+<td><code>_M_ARM64</code></td>
+</tr>
+<tr>
+<td>GCC</td>
+<td><code>__GNUC__</code></td>
+<td><code>__i386__</code></td>
+<td><code>__x86_64__</code></td>
+<td><code>__arm__</code></td>
+<td><code>__thumb__</code></td>
+<td><code>__aarch64__</code></td>
+</tr>
+<tr>
+<td>Clang</td>
+<td><code>__clang__</code></td>
+<td><code>__i386__</code></td>
+<td><code>__x86_64__</code></td>
+<td><code>__arm__</code></td>
+<td><code>__thumb__</code></td>
+<td><code>__aarch64__</code></td>
+</tr>
+</tbody></table>
 
+  </div>
+</div>
 
-<h2 id="常用宏定义"><a href="#常用宏定义" class="headerlink" title="常用宏定义"></a>常用宏定义</h2><p>操作系统预定义宏：</p>
-<p>操作系统 公共定义 64位系统定义</p>
-<p>Windows _WIN32 _WIN64</p>
-<p>macOS <strong>APPLE</strong> <strong>LP64</strong></p>
-<p>Linux <strong>linux</strong> <strong>LP64</strong></p>
-<p>Android <strong>ANDROID</strong> <strong>LP64</strong></p>
-<p>编译器预定义宏：</p>
-<p>编译器 编译器定义 x86指令集 AMD64指令集 ARM32指令集 Thumb指令集 ARM64指令集</p>
-<p>MSVC _MSC_VER _M_IX86 _M_X64 _M_ARM _M_THUMB _M_ARM64</p>
-<p>GCC <strong>GNUC</strong> <strong>i386</strong> <strong>x86_64</strong> <strong>arm</strong> <strong>thumb</strong> <strong>aarch64</strong></p>
-<p>Clang <strong>clang</strong> <strong>i386</strong> <strong>x86_64</strong> <strong>arm</strong> <strong>thumb</strong> <strong>aarch64</strong></p>
+      <div class="footer">
+  <span>Copyright © 2023 Leaout&#39;s Blog</span>
+  <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https://imzl.com/zenmind">ZenMind</a></span>
+</div>
 
-        </div>
-    
-<!-- tags -->
-
-    <div class="post-meta">
-        标签：
-        
-            <a href="/tags/C/"> / C++</a>
-        
+      <link rel="stylesheet" href="/css/a11y-dark.min.css">
+      <script src="/js/highlight.min.js"></script>
+      <script src="/js/highlightjs-line-numbers.js"></script>
+      <script>
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
+      </script>
     </div>
-
-</div>
-                <div class="footer">
-    <span>Copyright © 2023 Leaout&#39;s Blog</span>
-    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
-</div>
-
-<link rel="stylesheet" href="/css/a11y-dark.min.css">
-
-
-<script src="/js/highlight.min.js"></script>
-
-
-<script src="/js/highlightjs-line-numbers.js"></script>
-
-<script>
-    hljs.initHighlightingOnLoad();
-    hljs.initLineNumbersOnLoad();
-</script>
-
-            </div>
-        </div>
-    </body>
+  </div>
+</body>
 </html>
