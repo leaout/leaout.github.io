@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+<meta name="robots" content="index, follow">
+<title>Curs：一个个人量化投资平台与涨停打板策略实践 - Leaout&#39;s Blog</title>
+<meta property="og:type" content="article">
+<meta property="og:title" content="Curs：一个个人量化投资平台与涨停打板策略实践">
+<meta property="og:url" content="https://leaout.github.io/2026/07/24/curs/">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+
+<meta property="og:locale" content="zh_CN">
+
+<meta property="article:tag" content="量化交易">
+
+
+<meta property="article:published_time" content="2026-07-23T16:00:00.000Z">
+
+
+<meta property="article:modified_time" content="2026-07-24T03:09:37.777Z">
+
+<meta property="article:author" content="chenliangyu">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://leaout.github.io/2026/07/24/curs/">
+<link rel="shortcut icon" href="/img/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/reset.css">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/markdown.css">
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+<body>
+  <div class="paper">
+    <div class="paper-main">
+      <div class="post-header">
+  <a class="logo" href="/">Leaout&#39;s Blog</a>
+  <ul class="nav">
+    <li><a href="/">Home</a></li>
+    <li><a href="/about/">About</a></li>
+    <li><a href="/archives">Archives</a></li>
+  </ul>
+</div>
+
+      <div class="post-main">
+  <div class="post-main-title">Curs：一个个人量化投资平台与涨停打板策略实践</div>
+  <div class="post-meta">
+    2026-07-24
+    
+  </div>
+  
+  <div class="tags">
+    
+      <a href="/tags/%E9%87%8F%E5%8C%96%E4%BA%A4%E6%98%93/">量化交易</a>
+    
+  </div>
+  
+  <div class="post-md">
+    <h1 id="Curs：一个个人量化投资平台与涨停打板策略实践"><a href="#Curs：一个个人量化投资平台与涨停打板策略实践" class="headerlink" title="Curs：一个个人量化投资平台与涨停打板策略实践"></a>Curs：一个个人量化投资平台与涨停打板策略实践</h1><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>A股市场是一个高度复杂的非线性系统。做量化投资，最难的不是写策略，而是<strong>建立一套完整的数据采集、策略执行、风控管理和绩效回测的基础设施</strong>。市面上虽然有聚宽、米筐等平台，但本地化部署的可控性、自由度以及实时 Tick 级别的数据处理能力，始终是一个门槛。</p>
+<p>这就是 <strong>Curs</strong> 项目的出发点——一个全栈式个人自动化量化投资平台。项目地址：<a target="_blank" rel="noopener" href="https://github.com/leaout/curs">github.com&#x2F;leaout&#x2F;curs</a></p>
+<h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2><p>Curs 采用<strong>单进程架构</strong>，Web 服务和交易引擎运行在同一进程中，避免了 IPC 的复杂性和性能损耗：</p>
+<p><code>run.py (单进程) ├── Web 服务 (Flask, 端口 5000) │   ├── 策略管理 (ECharts 可视化) │   ├── 信号查询 │   ├── 股票池管理 │   ├── 持仓监控 │   └── 定时任务配置 └── 交易引擎 (Engine)     ├── 策略管理器 (StrategyManager) — 支持热加载     ├── QMT 账户 (QmtStockAccount) — 实盘通道     │   └── 东方财富交易接口     ├── 优化行情引擎 (OptimizedQuoteEngine)     └── 事件调度器 (EventsScheduler)         ├── 数据采集 (东财热点/同花顺)         ├── 定时任务 (Cron/Interval)         └── 盘后处理 (盈利统计/数据导入)</code></p>
+<h3 id="关键设计决策"><a href="#关键设计决策" class="headerlink" title="关键设计决策"></a>关键设计决策</h3><p><strong>行情优化</strong>：用 OptimizedQuoteEngine 只订阅热点股票池（200-500只），而非全市场5000+，Tick 级数据处理延迟控制在3秒以内。</p>
+<p><strong>双模式切换</strong>：每个策略可在 Web UI 一键切换「实盘模式」和「信号模式」，信号模式只记录买卖信号到数据库不下单，非常适合策略调试和回测验证。</p>
+<p><strong>多 Broker 支持</strong>：同时支持 QMT 和东方财富交易接口，配置化切换。</p>
+<h2 id="涨停打板策略：三层过滤体系"><a href="#涨停打板策略：三层过滤体系" class="headerlink" title="涨停打板策略：三层过滤体系"></a>涨停打板策略：三层过滤体系</h2><p>涨停打板的核心是<strong>在股票封板瞬间识别有效信号，排除诱多陷阱</strong>。Curs 实现了三套逐步迭代的策略，这里重点分析 limit_up_strategy 和 limit_up_strategy_advanced。</p>
+<h3 id="第一层：粗筛"><a href="#第一层：粗筛" class="headerlink" title="第一层：粗筛"></a>第一层：粗筛</h3><p>策略首先构建了两个核心数据源——昨日涨停股票和热门股票池，并对热点股做了<strong>连续上榜过滤</strong>，只保留至少连续2天在热点榜上的股票，过滤掉一日游的热点。</p>
+<p>&#96;python</p>
+<h1 id="从数据库获取昨日涨停股票（排除追高）"><a href="#从数据库获取昨日涨停股票（排除追高）" class="headerlink" title="从数据库获取昨日涨停股票（排除追高）"></a>从数据库获取昨日涨停股票（排除追高）</h1><p>yesterday &#x3D; (datetime.now() - timedelta(days&#x3D;1)).strftime(‘%Y-%m-%d’)<br>zt_stocks &#x3D; db_manager.get_zt_stocks_by_date(yesterday)<br>context.pre_limit_up_stocks &#x3D; set(zt_stocks)</p>
+<h1 id="从数据库获取热门股票池"><a href="#从数据库获取热门股票池" class="headerlink" title="从数据库获取热门股票池"></a>从数据库获取热门股票池</h1><p>hot_stocks &#x3D; db_manager.get_hot_stocks_from_pool(‘hot’)<br>context.hot_stocks &#x3D; set(hot_stocks)</p>
+<h1 id="连续上榜过滤：只保留至少连续2天在热点榜上的股票"><a href="#连续上榜过滤：只保留至少连续2天在热点榜上的股票" class="headerlink" title="连续上榜过滤：只保留至少连续2天在热点榜上的股票"></a>连续上榜过滤：只保留至少连续2天在热点榜上的股票</h1><p>consecutive &#x3D; db_manager.get_consecutive_hot_stocks(min_consecutive_days&#x3D;2)<br>if consecutive:<br>    context.hot_stocks &amp;&#x3D; set(consecutive)<br>&#96;</p>
+<p>过滤规则：</p>
+<ol>
+<li>排除 ST 股票</li>
+<li>排除昨日已涨停的股票</li>
+<li>排除不在热门股票池中的股票</li>
+<li>排除当日已触发的烂板（涨停后开板再次封板）</li>
+<li>连续上榜过滤——只保留连续2天热度在榜的股票</li>
+</ol>
+<h3 id="第二层：挂单量衰减检测（核心信号）"><a href="#第二层：挂单量衰减检测（核心信号）" class="headerlink" title="第二层：挂单量衰减检测（核心信号）"></a>第二层：挂单量衰减检测（核心信号）</h3><p>这是策略最核心的逻辑。当一只股票涨停时，卖一到卖五档口会出现涨停价的卖单。如果主力真的想封板，这些卖单会被快速吃掉。反之，如果挂单量在上涨，说明主力在板上出货。</p>
+<p>&#96;python</p>
+<h1 id="检查5档行情中是否有涨停价"><a href="#检查5档行情中是否有涨停价" class="headerlink" title="检查5档行情中是否有涨停价"></a>检查5档行情中是否有涨停价</h1><p>if upper_limit in ask_prices:<br>    limit_up_index &#x3D; ask_prices.index(upper_limit)<br>    current_volume &#x3D; ask_volumes[limit_up_index]<br>    last_volume &#x3D; context.last_order_volumes.get(stock_code, current_volume)</p>
+<pre><code># 判断挂单量是否减少40%以上
+if current_volume &lt;= last_volume * 0.6:
+    buy_at_limit_up(context, stock_code, upper_limit)
+    context.daily_signaled_stocks.add(stock_code)
+
+context.last_order_volumes[stock_code] = current_volume
+</code></pre>
+<p>&#96;</p>
+<p>当挂单衰减率 (last_volume - current_volume) &#x2F; last_volume &gt;&#x3D; 40% 时触发买入信号，意味着涨停价卖单被快速消化，封板意图强烈。</p>
+<p>策略还有一个<strong>排板买入</strong>机制——如果某只股票已出现在涨停价的买方队列，但之前已观察到卖单被吃完（last_volume &gt; 0 且当前 current_volume &#x3D; 0），说明筹码已被扫货，直接追涨买入。</p>
+<h3 id="第三层：卖出策略组合"><a href="#第三层：卖出策略组合" class="headerlink" title="第三层：卖出策略组合"></a>第三层：卖出策略组合</h3><p>买入只是半场比赛，卖出的节奏决定盈利。策略采用了三层卖出逻辑：</p>
+<p>&#96;python<br>def sell_strategy(context, stock_code, tick):<br>    # 买入后持续追踪峰值价格<br>    max_peak &#x3D; context.trade_records[stock_code][‘peak_price’]<br>    if current_price &gt; max_peak:<br>        max_peak &#x3D; current_price<br>        context.trade_records[stock_code][‘peak_price’] &#x3D; max_peak</p>
+<pre><code># 策略1：动态止盈 — 从峰值回落2%卖出
+if current_price &lt; max_peak * 0.98:
+    sell_stock(context, stock_code, current_price)
+
+# 策略2：时间窗口 — 10:00-10:30 弱势卖出
+# 如果不在涨停状态且走势弱于预期，在10:00-10:30卖出
+
+# 策略3：尾盘强制清仓 — 14:55 必然清仓
+if current_time.time() &gt;= datetime.time(14, 55):
+    close_position(context, stock_code)
+</code></pre>
+<p>&#96;</p>
+<p>这里的关键是<strong>峰值追踪</strong>，这是日内交易中最重要的变量。策略在买入后持续追踪每只股票的日内最高价，回落2%即触发卖出，这是一种典型的移动止盈策略。</p>
+<h2 id="T-1-高级版：第二天智能卖出"><a href="#T-1-高级版：第二天智能卖出" class="headerlink" title="T+1 高级版：第二天智能卖出"></a>T+1 高级版：第二天智能卖出</h2><p>A 股是 T+1 制度，涨停打板买入的股票最早要到下一个交易日才能卖出。limit_up_strategy_advanced 对次日卖出做了精细化处理，基于开盘价格区间的决策树来决定是否持有还是卖出：</p>
+<p>&#96;python<br>def analyze_sell_decision(context, stock_code, check_record, tick):<br>    open_price &#x3D; check_record[‘open_price’]<br>    current_price &#x3D; check_record[‘current_price’]<br>    change_ratio &#x3D; (current_price - open_price) &#x2F; open_price</p>
+<pre><code># 1. 开盘涨停 → 坚决持有
+if current_price &gt;= upper_limit:
+    return {&#39;action&#39;: &#39;HOLD&#39;, &#39;reason&#39;: &#39;开盘涨停，坚决持有&#39;}
+
+# 2. 强势上涨 (&gt;8%) → 继续观察
+if change_ratio &gt; 1.08:
+    return {&#39;action&#39;: &#39;HOLD&#39;, &#39;reason&#39;: &#39;强势上涨，继续观察&#39;}
+
+# 3. 温和上涨 (3%-8%) → 比较买入成本
+if 1.03 &lt;= change_ratio &lt;= 1.08:
+    if current_price &gt; buy_price:
+        return {&#39;action&#39;: &#39;HOLD&#39;, &#39;reason&#39;: &#39;价格高于成本&#39;}
+    else:
+        return {&#39;action&#39;: &#39;SELL&#39;, &#39;reason&#39;: &#39;价格回落至成本以下&#39;}
+
+# 4. 弱势/下跌 → 果断卖出
+if change_ratio &lt; 1.03:
+    return {&#39;action&#39;: &#39;SELL&#39;, &#39;reason&#39;: &#39;开盘走势疲弱&#39;}
+</code></pre>
+<p>&#96;</p>
+<p>核心假设很简单：<strong>涨停股次日开盘走势决定了当天的概率分布</strong>。强势开盘（涨停或大涨8%+）的高概率延续是持有信号；温和上涨但价格已经低于成本说明情绪转弱，应果断离场；开盘疲弱直接卖出，不抱幻想。</p>
+<h2 id="SVM-机器学习模型"><a href="#SVM-机器学习模型" class="headerlink" title="SVM 机器学习模型"></a>SVM 机器学习模型</h2><p>除了规则策略，Curs 还集成了一套 SVM 分类模型进行股价走势预测。模型用过去15个交易日的7个技术因子预测未来5个交易日的涨跌方向：</p>
+<p>&#96;python<br>features &#x3D; [<br>    close_mean,    # 收盘价均值比<br>    volume_mean,   # 成交量均值比<br>    max_mean,      # 最高价均值比<br>    min_mean,      # 最低价均值比<br>    vol,           # 当日成交量<br>    return_now,    # 15日收益率<br>    std            # 收盘价标准差<br>]</p>
+<p>clf &#x3D; svm.SVC(C&#x3D;1.0, kernel&#x3D;’rbf’, gamma&#x3D;’auto’)<br>clf.fit(x_train, y_train)<br>&#96;</p>
+<p>每周一用模型预测周五涨跌，预测上涨则开仓、目标10%止盈、回撤2%止损。这个 ML 示例表明 Curs 的架构可以轻松接入任何机器学习模型——只需要实现 handle_tick 接口即可。</p>
+<h2 id="数据采集管线"><a href="#数据采集管线" class="headerlink" title="数据采集管线"></a>数据采集管线</h2><p>量化交易的数据管线决定了策略质量的上限。Curs 对接了多个数据源：</p>
+<p><strong>东方财富热点股票采集</strong>：每天盘后自动抓取东方财富的热点板块和个股排行榜，解析 HTML 并清洗入库。同花顺热点作为补充数据源，实现多数据源交叉验证。</p>
+<p><strong>QMT 行情订阅</strong>：通过迅投 QMT 接口订阅实时 Tick 数据，5档盘口数据是核心策略的输入。优化引擎在非交易时段自动休眠，降低系统开销。</p>
+<p><strong>定时任务调度</strong>：项目内建 	ask_scheduler.py 支持 Cron 表达式和固定间隔两种模式，在 Web UI 灵活配置。Windows 批处理脚本实现完整的开机自启、盘前重启、盘后选股和每日导入流程。</p>
+<table>
+<thead>
+<tr>
+<th>任务</th>
+<th>触发时间</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CursBoot</td>
+<td>登录时</td>
+<td>启动 QMT + Curs</td>
+</tr>
+<tr>
+<td>CursPreMarket</td>
+<td>工作日 08:50</td>
+<td>盘前重启 QMT + Curs</td>
+</tr>
+<tr>
+<td>CursAfterMarket</td>
+<td>工作日 16:00</td>
+<td>盘后选股</td>
+</tr>
+<tr>
+<td>CursDailyImport</td>
+<td>每日 21:00</td>
+<td>导入采集数据</td>
+</tr>
+</tbody></table>
+<h2 id="Web-监控面板"><a href="#Web-监控面板" class="headerlink" title="Web 监控面板"></a>Web 监控面板</h2><p>Curs 的 Web 界面基于 Flask + ECharts 实现，提供完整的策略管理能力：</p>
+<ul>
+<li>策略列表显示所有已注册策略及其运行状态，用彩色圆点直观展示启停</li>
+<li>指标卡片展示累计收益率、总交易次数、成功率、当日信号数等关键指标</li>
+<li>ECharts 收益曲线折线图和信号统计饼图，支持30秒自动刷新</li>
+<li>交易记录表支持 CSV 导出</li>
+<li>一键切换实盘&#x2F;信号模式，无需修改策略代码</li>
+</ul>
+<h2 id="盈利统计与分析"><a href="#盈利统计与分析" class="headerlink" title="盈利统计与分析"></a>盈利统计与分析</h2><p>ProfitStats 模块是一个轻量级统计引擎，记录每次交易的完整生命周期，从买入到持续更新价格曲线，再到成交确认和卖出，所有数据持久化到 JSON 文件，并可通过 Web 界面查询。</p>
+<p>其中最有价值的分析维度是 	ime_to_max_profit——<strong>从买入到最大盈利的时间分布</strong>。这个指标能告诉你涨停打板后大概多久出现最佳卖点，从而优化止盈参数和卖出的时间窗口设置。</p>
+<h2 id="配置与运维"><a href="#配置与运维" class="headerlink" title="配置与运维"></a>配置与运维</h2><p><code>ash pip install -r requirements.txt python setup.py install python run.py                    # 启动所有服务 python run.py --web-only         # 仅启动Web服务 python run.py -p 8080            # 指定端口 </code></p>
+<p>配置采用双层设计：config.yml 放通用配置，config.local.yml（已 .gitignore）放敏感信息，支持环境变量覆盖。项目从 2025 年 3 月开始运行至今，经历了数月的实盘验证和策略迭代。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Curs 最大的价值不在于某一个策略有多高的胜率，而在于<strong>建立了一套完整的从数据采集到策略执行到绩效反馈的闭环系统</strong>。如果你也在做 A 股量化，欢迎关注 <a target="_blank" rel="noopener" href="https://github.com/leaout/curs">Curs 项目</a>，Star 和 Issues 都欢迎。</p>
+<hr>
+<p><em>本文所有代码均来自 Curs 项目源码，仅用于技术交流，不构成投资建议。</em></p>
+
+  </div>
+</div>
+
+      <div class="footer">
+  <span>Copyright © 2023 Leaout&#39;s Blog</span>
+  <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https://imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+      <link rel="stylesheet" href="/css/a11y-dark.min.css">
+      <script src="/js/highlight.min.js"></script>
+      <script src="/js/highlightjs-line-numbers.js"></script>
+      <script>
+        hljs.highlightAll();
+        hljs.initLineNumbersOnLoad();
+      </script>
+    </div>
+  </div>
+</body>
+</html>
