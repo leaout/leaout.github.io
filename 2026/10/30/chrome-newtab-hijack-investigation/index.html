@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+    <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="robots" content="index, follow">
+  <!-- title -->
+  
+    
+  <title>Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了 - Leaout&#39;s Blog</title>
+    
+  
+  
+  <!-- open graph -->
+  <meta name="description" content="Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了今天早上开电脑，点开 Chrome，又落到那个页面： https:&#x2F;&#x2F;aitab.360.cn&#x2F;newtab.html?djsource&#x3D;nO6TdR&amp;search&#x3D;3037095  关掉重开，还是它。新建标签页，也是它。但进设置一看，主页是空的，启动时选的是”新标签页”，搜索引擎看着也是正常的。这种”设置里">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了">
+<meta property="og:url" content="https://leaout.github.io/2026/10/30/chrome-newtab-hijack-investigation/">
+<meta property="og:site_name" content="Leaout&#39;s Blog">
+<meta property="og:description" content="Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了今天早上开电脑，点开 Chrome，又落到那个页面： https:&#x2F;&#x2F;aitab.360.cn&#x2F;newtab.html?djsource&#x3D;nO6TdR&amp;search&#x3D;3037095  关掉重开，还是它。新建标签页，也是它。但进设置一看，主页是空的，启动时选的是”新标签页”，搜索引擎看着也是正常的。这种”设置里">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-10-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-30T07:54:24.021Z">
+<meta property="article:author" content="chenliangyu">
+<meta property="article:tag" content="Chrome">
+<meta property="article:tag" content="浏览器">
+<meta property="article:tag" content="排障">
+<meta name="twitter:card" content="summary">
+  <!-- canonical -->
+  
+  <link rel="canonical" href="https://leaout.github.io/2026/10/30/chrome-newtab-hijack-investigation/">
+  
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <!-- CSS -->
+  
+<link rel="stylesheet" href="/css/reset.css">
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+<link rel="stylesheet" href="/css/markdown.css">
+
+  
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 7.0.0"></head>
+
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">Leaout&#39;s Blog</a>
+    <!-- <div class="logo"><a href="/" title="Len"><img src="/img/logo.svg" alt="Len" aria-label="logo" height="20"></a></div> -->
+        <ul class="nav">
+            
+            <li><a href="/">Home</a></li>
+            
+            <li><a href="/about/">About</a></li>
+            
+            <li><a href="/archives">Archives</a></li>
+            
+        </ul>
+
+
+    </a>
+</div>
+
+                
+                <div class="post-main">
+    
+        <div class="post-main-title">
+            Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了
+        </div>
+        <div class="post-meta">
+            2026-10-30 ｜ 
+            
+        </div>
+        <!-- 圆角分类 -->
+        <!-- <div class="tags"> -->
+            <!--  -->
+        <!-- </div> -->
+        <div class="post-md">
+            <h1 id="Chrome-每次打开都跳到-aitab-360-cn，我顺着时间线把源头挖出来了"><a href="#Chrome-每次打开都跳到-aitab-360-cn，我顺着时间线把源头挖出来了" class="headerlink" title="Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了"></a>Chrome 每次打开都跳到 aitab.360.cn，我顺着时间线把源头挖出来了</h1><p>今天早上开电脑，点开 Chrome，又落到那个页面：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">https://aitab.360.cn/newtab.html?djsource=nO6TdR&amp;search=3037095</span><br></pre></td></tr></table></figure>
+
+<p>关掉重开，还是它。新建标签页，也是它。但进设置一看，主页是空的，启动时选的是”新标签页”，搜索引擎看着也是正常的。这种”设置里一切正常但行为不对”的情况，基本可以断定不是我改的，是有人动过配置。</p>
+<h2 id="先按常规套路排一遍"><a href="#先按常规套路排一遍" class="headerlink" title="先按常规套路排一遍"></a>先按常规套路排一遍</h2><p>我的第一反应是老几样：快捷方式后面挂 URL、hosts、计划任务、启动项。</p>
+<p>结果全是干净的。桌面和任务栏的 <code>Google Chrome.lnk</code> 参数只有 <code>--user-data-dir</code> 和 <code>-disable-background-networking</code>，hosts 一个有效行都没有，自启动里全是 OneDrive、QQ、迅雷这些熟面孔，计划任务里只有 Google 自己的 PlatformExperienceHelper。</p>
+<p>然后怀疑扩展。把 <code>Default\Extensions</code> 下每个 manifest 都翻了一遍，找 <code>chrome_url_overrides</code>、<code>chrome_settings_overrides</code>，一个都没有——装的就四个：ChatGPT 侧边栏、一个 C++ 文档搜索、Chrome 商店支付组件，还有一个跨域请求调试的扩展。</p>
+<p>到这儿我有点烦了。因为 Chrome 的设置界面里搜 <code>aitab</code>，什么都搜不到，<code>Preferences</code> 文件里唯一出现 <code>aitab</code> 的地方是”你访问过这个网站 8 次”那种统计记录。</p>
+<h2 id="真正的设置在另一个文件里"><a href="#真正的设置在另一个文件里" class="headerlink" title="真正的设置在另一个文件里"></a>真正的设置在另一个文件里</h2><p>Chrome 从很早就把主页、启动页、默认搜索引擎这类偏好挪进了 <code>Secure Preferences</code>，并且带 HMAC 校验（<code>protection.macs</code> 那一坨）。好处是别的软件不能随便改你的主页，坏处是一旦有工具会重算 HMAC，GUI 里就永远看不出来。</p>
+<p>顺手说一句，直接 <code>Get-Content | ConvertFrom-Json</code> 这个文件经常报错，不是文件坏了，是 Chrome 正在写它。稳妥的做法是先复制到临时目录再解析。</p>
+<p>打开这份 <code>Secure Preferences</code>，问题一眼就看见了：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="attr">&quot;default_search_provider_data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;template_url_data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;short_name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;百度&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;keyword&quot;</span><span class="punctuation">:</span> <span class="string">&quot;baidu.com&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;url&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://bds.tmdh725.com/#ie=&#123;inputEncoding&#125;&amp;wd=&#123;searchTerms&#125;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;new_tab_url&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://bds.tmdh725.com/&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>一个叫”百度”、图标也盗用百度的搜索引擎，实际域名是 <code>bds.tmdh725.com</code>。关键是那个 <code>new_tab_url</code>——Chrome 允许搜索引擎提供”自带的新标签页”，填了它，新标签页就归这个域名管。这跟我一开始以为的”主页被改”完全是两回事，所以设置界面里怎么找都找不到。</p>
+<p>我直接请求了一下这个域名，200，页面标题就叫 <code>AItab</code>——它自己就是一层壳。历史里 aitab 那条访问的 transition 是”服务器重定向”、<code>from_visit</code> 指向前一条，说明浏览器是被 302 过去的。而那个 URL 里带着两个参数：</p>
+<ul>
+<li><code>djsource=nO6TdR</code> — 渠道号</li>
+<li><code>search=3037095</code> — 推广位 ID，正好就是那个假”百度”引擎的编号</li>
+</ul>
+<p>说白了就是从这家跳那家，最后落到 360 的推广页上，中间每一跳都有分成。</p>
+<h2 id="用历史库把每一次触发都对上"><a href="#用历史库把每一次触发都对上" class="headerlink" title="用历史库把每一次触发都对上"></a>用历史库把每一次触发都对上</h2><p>光看配置还不够，我想确认”打开就跳”这件事到底是怎么发生的。Chrome 的 History 是个 SQLite，<code>visits</code> 表里有个 <code>transition</code> 字段，存的是导航类型：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> v.visit_time, v.transition, u.url</span><br><span class="line"><span class="keyword">from</span> visits v <span class="keyword">join</span> urls u <span class="keyword">on</span> u.id <span class="operator">=</span> v.url</span><br><span class="line"><span class="keyword">order</span> <span class="keyword">by</span> v.visit_time <span class="keyword">desc</span> limit <span class="number">20</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>bds.tmdh725.com</code> 那条是 <code>0x10000002</code>，意思是”自动打开、链的起点”；<code>aitab.360.cn</code> 那条是 <code>0xA0000002</code>，意思是”服务器重定向、链的终点”，<code>from_visit</code> 指向前一条。时间戳和每次启动 Chrome 的时刻一一对应，最近一次是 13:08:56。</p>
+<p>到这里机制就完整了：Chrome 启动 → 按”新标签页”打开 → 新标签页其实是搜索引擎给的 <code>new_tab_url</code> → 落到假百度 → 302 到 aitab。</p>
+<h2 id="还有个更恶心的：它同步到账号里了"><a href="#还有个更恶心的：它同步到账号里了" class="headerlink" title="还有个更恶心的：它同步到账号里了"></a>还有个更恶心的：它同步到账号里了</h2><p>继续在这份 <code>Secure Preferences</code> 里翻，发现了 <code>account_values</code> 节点，里面存着一份”从云端同步下来的覆盖值”：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="attr">&quot;account_values&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;homepage&quot;</span><span class="punctuation">:</span> <span class="string">&quot;http://&lt;内网服务&gt;:30033/&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;session&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span> <span class="attr">&quot;restore_on_startup&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">               <span class="attr">&quot;startup_urls&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;https://www.google.com/&quot;</span><span class="punctuation">,</span> <span class="string">&quot;about:blank&quot;</span><span class="punctuation">,</span> <span class="string">&quot;http://dhs.cbd263.com/&quot;</span><span class="punctuation">]</span> <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>这就是为什么我第一轮改完之后，重启一次它又回来了——本地改了，云端还在，Chrome 下次启动照样把覆盖值写回来。顺便说，那串地址是我们公司的一个内网服务，这里给它打个码。改成它，大概是动手的软件顺手抓了当时开着的标签页。</p>
+<h2 id="动手修"><a href="#动手修" class="headerlink" title="动手修"></a>动手修</h2><p>修复的顺序有讲究：<strong>必须先退 Chrome</strong>。Chrome 退出时会把内存里的偏好写回磁盘，开着改等于白改。</p>
+<p>然后：</p>
+<ol>
+<li>备份 <code>Preferences</code> 和 <code>Secure Preferences</code>；</li>
+<li><code>Preferences</code> 里删掉 <code>default_search_provider</code> 和 <code>default_search_provider_data</code>，Chrome 会自己重建一个默认的（重建出来是 Google）；</li>
+<li><code>Secure Preferences</code> 里把 <code>homepage</code> 清空、<code>session</code> 重置成 <code>restore_on_startup: 5</code>（新标签页）、删掉 <code>account_values</code>，同时把它对应的那几个 MAC 条目也删掉——MAC 留着的话 Chrome 会认为”值被篡改了”再重置一遍，虽然结果一样但会弹通知；</li>
+<li><code>Web Data</code> 这个 SQLite 里还有一条 keywords 记录（id&#x3D;1），就是那个假百度，<code>delete from keywords where id=1</code>；</li>
+<li>注册表里 <code>HKLM\SOFTWARE\WOW6432Node\Google\Chrome\Extensions\ncennffkjdiamlpmcbajkmaiiiddgioo</code> 指向 <code>ChromeExtensionCache\xl_ext_chrome.crx</code>，删掉，缓存整个目录先移到临时目录而不是直接删。</li>
+</ol>
+<p>重启验证：新标签页回 Google 了，历史里再没有 <code>bds.tmdh725.com</code>。但 <code>account_values</code> 又冒出来了——如前面说的，云端还在。</p>
+<h2 id="到底是谁干的"><a href="#到底是谁干的" class="headerlink" title="到底是谁干的"></a>到底是谁干的</h2><p>这一步最有意思。<code>Web Data</code> 的 <code>keywords</code> 表虽然不存创建时间（<code>date_created</code> 是 0），但 <code>last_visited</code> 有：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">13405357233880352 → 2025-10-19 14:20:33</span><br></pre></td></tr></table></figure>
+
+<p>也就是说这个假引擎至少从 2025 年 10 月就在了。</p>
+<p>再翻 Chrome 的下载记录，和这台机器的目录创建时间一对：</p>
+<ul>
+<li>2025-09-02，<code>360sd</code>、<code>360Chrome</code> 落地</li>
+<li>2025-09-05 13:22，从 <code>weishi.360.cn</code> 下载了 <code>setupbeta_jisu.exe</code>（360 极速版卫士），当晚 21:26 出现 <code>ProgramData\360safe</code></li>
+<li>2025-10-20 13:02，从 <code>www.360.cn</code> 下载了 <code>inst.exe</code>，当晚 21:03 装出 <code>360Safe</code>，21:05 装出 <code>360se6</code>（360 安全浏览器）</li>
+</ul>
+<p>时间线几乎咬着假引擎的出现时间。360 系的卫士和浏览器都内置”主页锁定 &#x2F; 默认搜索”这类模块，它们改别的浏览器设置时，走的就是直接改写 <code>Secure Preferences</code> 并且重算 HMAC 这条路——不然在 GUI 里早被改回来了。现在 <code>C:\Program Files (x86)\360</code> 下面还留着 <code>360DrvMgr</code>、<code>360Safe</code>、<code>360sd</code> 三个空壳目录，服务、进程、卸载项都没了。</p>
+<p>要说明的是：Chrome 历史默认只留 90 天，最早只到 2026-08，2025 年当时”哪个进程写的”这个动作已经回放不出来了。所以这是高置信推断，不是现场抓获。</p>
+<p>顺便排除一个嫌疑人：迅雷是 2026-06-23 装的，它确实塞了个外部扩展（就是上面删的 <code>xl_ext_chrome.crx</code>），但那只是下载支持，跟搜索引擎无关。</p>
+<h2 id="顺手写了个工具"><a href="#顺手写了个工具" class="headerlink" title="顺手写了个工具"></a>顺手写了个工具</h2><p>这种事不值得每次都手工查一遍，所以写了个 PowerShell 脚本，查八个位置：</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>为什么查</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>default_search_provider(_data)</code></td>
+<td><code>new_tab_url</code> 就是新标签页劫持的入口</td>
+</tr>
+<tr>
+<td><code>Secure Preferences</code> 的主页 &#x2F; 启动页 &#x2F; <code>account_values</code></td>
+<td>带 HMAC，GUI 里看不见</td>
+</tr>
+<tr>
+<td><code>Policies\Google\Chrome</code></td>
+<td>组策略优先级最高</td>
+</tr>
+<tr>
+<td><code>Google\Chrome\Extensions</code> 注册表</td>
+<td>外部扩展静默安装通道</td>
+</tr>
+<tr>
+<td>快捷方式参数</td>
+<td><code>chrome.exe &quot;http://...&quot;</code>、<code>-app=</code>、<code>--load-extension</code></td>
+</tr>
+<tr>
+<td>自启动 &#x2F; 计划任务 &#x2F; hosts</td>
+<td>常驻改主页、伪造解析</td>
+</tr>
+<tr>
+<td>扩展的 <code>chrome_url_overrides</code></td>
+<td>扩展也能接管新标签页</td>
+</tr>
+<tr>
+<td>安装目录 <code>master_preferences</code></td>
+<td>新 profile 的模板文件</td>
+</tr>
+</tbody></table>
+<p>默认只读，加 <code>-Fix</code> 才动手，动手前备份，退出码 0&#x2F;1&#x2F;2 表示干净&#x2F;可疑&#x2F;高危。双击 <code>ScanChromeHijack.cmd</code> 就能跑。</p>
+<p>写的过程中踩了三个坑，值得记一下：</p>
+<p>第一个，中文全是乱码。Windows PowerShell 5.1 读 <code>.ps1</code> 时，文件没有 BOM 就按 ANSI 解码，UTF-8 的中文直接变方块。解决办法是用 <code>[IO.File]::WriteAllText($p, $txt, (New-Object Text.UTF8Encoding($true)))</code> 存成带 BOM 的 UTF-8。这个坑每次都会踩。</p>
+<p>第二个更有意思：主页明明没有设置，脚本却报 <code>homepage = C:\Users\Administrator</code>。查了半天才发现变量名撞了——<code>$home</code> 在 PowerShell 里就是自动变量 <code>$HOME</code>，赋值会静默失败，读出来还是用户目录。改叫 <code>$homeVal</code> 就好了。</p>
+<p>第三个，改 JSON 我一开始用了 <code>JavaScriptSerializer</code>，结果在嵌套对象上抛”检测到循环引用”——因为 PowerShell 把嵌套的字典包了一层 <code>PSObject</code>。后来换成 <code>ConvertFrom-Json</code> &#x2F; <code>ConvertTo-Json -Depth 100</code>，但不敢直接信它，先拿真的 <code>Secure Preferences</code> 做了一次往返，用 Python 把两边 <code>json.load</code> 出来比对，键、<code>session</code>、<code>account_values</code>、扩展 MAC 条目数量全都一致，才敢用。</p>
+<p>验证是用假数据做的：在 <code>test-profile</code> 里造一份带假百度、可疑启动页、<code>account_values</code>、假 MAC 的配置，扫描报 3 项高危 1 项注意，<code>-Fix</code> 之后文件变成 <code>&#123;&quot;homepage&quot;:&quot;&quot;,&quot;homepage_is_newtabpage&quot;:true,&quot;session&quot;:&#123;&quot;restore_on_startup&quot;:5&#125;&#125;</code>，复扫清零。</p>
+<h2 id="最后一步只能手动"><a href="#最后一步只能手动" class="headerlink" title="最后一步只能手动"></a>最后一步只能手动</h2><p><code>account_values</code> 是从 Google 账号同步下来的，删几次都会被拉回去。唯一的断根办法是在 <code>chrome://settings/syncSetup</code> 里重置同步。这一步工具做不了，也不该做——删云端数据得自己点。</p>
+<p>我把云端那份清掉之后，Chrome 下次启动时自己把本地的 <code>account_values</code> 也抹了，<code>Secure Preferences</code> 的写入时间停在 13:26。再复查：</p>
+<ul>
+<li>默认搜索引擎：Google，<code>new_tab_url</code> 为空</li>
+<li>主页、启动页：默认</li>
+<li>劫持地址最后一次访问：13:08:56，修之前的那一次</li>
+<li>扫描器：0 高危 0 注意</li>
+</ul>
+<p>有点感慨的是，这类劫持现在都不写注册表了。它只改一个你平时不会打开的文件，然后靠云同步活下来——你重装 Chrome 都没用，登录同一个账号，配置自己就回来了。反过来，排查的时候光看注册表和启动项也确实会一无所获，得往 <code>Secure Preferences</code> 和 <code>Web Data</code> 里钻。</p>
+<p>工具留在目录里了，备份文件过两天再删。机器上那三个 360 的空壳目录，等哪天想起来再收拾。</p>
+
+        </div>
+    
+<!-- tags -->
+
+    <div class="post-meta">
+        标签：
+        
+            <a href="/tags/Chrome/"> / Chrome</a>
+        
+            <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8/"> / 浏览器</a>
+        
+            <a href="/tags/%E6%8E%92%E9%9A%9C/"> / 排障</a>
+        
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2023 Leaout&#39;s Blog</span>
+    <span>Powered by <a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a> with <a target="_blank" rel="noopener" href="https:///imzl.com/zenmind">ZenMind</a></span>
+</div>
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
